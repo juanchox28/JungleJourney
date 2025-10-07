@@ -1,101 +1,40 @@
 import { useRoute } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import TourDetail from "@/components/TourDetail";
 import ReviewCard from "@/components/ReviewCard";
+import type { Tour } from "@shared/schema";
+import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
 import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
 import macawImage from '@assets/generated_images/Macaws_Amazon_rainforest_birds_fd5ba5b5.png';
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 
-//todo: remove mock functionality
-const tourData: Record<string, any> = {
-  "1": {
-    id: "1",
-    title: "Wildlife Expedition: Jaguar Tracking",
-    description: "Embark on an unforgettable journey deep into the Amazon rainforest to track the elusive jaguar. This challenging expedition takes you through pristine jungle terrain where few tourists venture. Our expert guides, who have spent decades studying these magnificent cats, will help you understand jaguar behavior, identify tracks, and maximize your chances of a sighting. Beyond jaguars, you'll encounter countless other species including monkeys, birds, and reptiles. This is a true wilderness adventure for those seeking an authentic rainforest experience.",
-    images: [jaguarImage, canoeImage, macawImage, dolphinImage],
-    duration: "5 days, 4 nights",
-    difficulty: "Challenging",
-    price: 899,
-    rating: 4.8,
-    reviews: 124,
-    groupSize: "Max 8 people",
-    location: "Manaus, Brazil",
+function convertTourToDisplayFormat(tour: Tour) {
+  const images = [jaguarImage, dolphinImage, canoeImage, macawImage];
+  const priceInfo = getPriceDisplay(tour);
+
+  return {
+    id: tour.id,
+    title: tour.name,
+    description: tour.description || tour.detalle || '',
+    images: images,
+    duration: tour.duration ? `${tour.duration} hours` : 'Various',
+    difficulty: 'Moderate',
+    priceDisplay: priceInfo.text,
+    rating: 4.7,
+    reviews: 50,
+    groupSize: '2-6 people',
+    location: formatLocation(tour.location, true),
     included: [
-      "Professional wildlife guide",
-      "Eco-lodge accommodation",
-      "All meals and snacks",
-      "Tracking equipment",
-      "Night vision cameras",
+      "Professional guide",
+      "Transportation",
+      "Equipment included",
       "Insurance coverage"
     ],
-    itinerary: [
-      {
-        day: 1,
-        title: "Arrival & Jungle Orientation",
-        description: "Transfer from Manaus to our base camp deep in the jungle. Evening orientation on jaguar behavior and safety protocols."
-      },
-      {
-        day: 2,
-        title: "First Tracking Expedition",
-        description: "Dawn trek to known jaguar territories. Learn to identify tracks, scat, and territory markings. Afternoon wildlife observation."
-      },
-      {
-        day: 3,
-        title: "Deep Jungle Trek",
-        description: "Full day expedition to remote areas. Set up camera traps and conduct systematic wildlife surveys."
-      },
-      {
-        day: 4,
-        title: "River & Forest Combination",
-        description: "Morning canoe safari, afternoon jungle tracking. Night safari to observe nocturnal predators."
-      },
-      {
-        day: 5,
-        title: "Final Tracking & Departure",
-        description: "Early morning final tracking session, review camera trap footage, and return transfer to Manaus."
-      }
-    ]
-  },
-  "2": {
-    id: "2",
-    title: "Pink Dolphin River Adventure",
-    description: "Experience the magic of the Amazon River with our exclusive pink dolphin tour. Watch these rare and beautiful creatures in their natural habitat during the golden hour. Our expert guides will share fascinating insights about the ecosystem and wildlife. This gentle adventure is perfect for families and nature lovers of all ages.",
-    images: [dolphinImage, canoeImage, macawImage, jaguarImage],
-    duration: "3 days, 2 nights",
-    difficulty: "Easy",
-    price: 649,
-    rating: 4.9,
-    reviews: 187,
-    groupSize: "Max 12 people",
-    location: "Manaus, Brazil",
-    included: [
-      "Professional river guide",
-      "Riverside lodge stay",
-      "All meals included",
-      "Boat transportation",
-      "Photography equipment",
-      "Dolphin interaction permits"
-    ],
-    itinerary: [
-      {
-        day: 1,
-        title: "Arrival & River Introduction",
-        description: "Meet your guide and transfer to riverside lodge. Sunset dolphin spotting from traditional canoe."
-      },
-      {
-        day: 2,
-        title: "Full Day River Exploration",
-        description: "Dawn dolphin photography session, canoe through flooded forest, visit local community, night river safari."
-      },
-      {
-        day: 3,
-        title: "Final Morning & Return",
-        description: "Early morning dolphin encounter, breakfast at lodge, return transfer to Manaus with photo memories."
-      }
-    ]
-  }
-};
+    itinerary: []
+  };
+}
 
 //todo: remove mock functionality
 const reviews = [
@@ -124,17 +63,51 @@ const reviews = [
 
 export default function TourDetailPage() {
   const [match, params] = useRoute("/tour/:id");
-  const tourId = params?.id || "1";
-  const tour = tourData[tourId] || tourData["1"];
+  const tourId = params?.id || "";
+
+  const { data: tour, isLoading, error } = useQuery<Tour>({
+    queryKey: ['/api/tours', tourId],
+    queryFn: async () => {
+      const response = await fetch(`/api/tours/${tourId}`);
+      if (!response.ok) throw new Error('Failed to fetch tour');
+      return response.json();
+    },
+    enabled: !!tourId,
+  });
 
   const handleInquire = (tourId: string) => {
     console.log('Inquiry for tour:', tourId);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center" data-testid="loading-tour">
+          <p className="text-muted-foreground">Loading tour details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center" data-testid="error-tour">
+          <h1 className="font-serif text-3xl font-bold mb-4">Tour Not Found</h1>
+          <p className="text-muted-foreground">The tour you're looking for doesn't exist.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayTour = convertTourToDisplayFormat(tour);
+
   return (
     <div className="min-h-screen">
       <Navigation />
-      <TourDetail tour={tour} onInquire={handleInquire} />
+      <TourDetail tour={displayTour} onInquire={handleInquire} />
       
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <h2 className="font-serif text-3xl font-bold mb-8">What Our Guests Say</h2>

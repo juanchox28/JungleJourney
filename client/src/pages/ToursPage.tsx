@@ -5,6 +5,7 @@ import FilterBar from "@/components/FilterBar";
 import TourCard from "@/components/TourCard";
 import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
+import { formatLocation, getPriceDisplay } from "@/lib/tourUtils";
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
 import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
@@ -76,7 +77,8 @@ export default function ToursPage() {
                 description={tour.detalle || tour.description || ''}
                 duration={tour.duration || 'Various'}
                 difficulty="Moderate"
-                price={parseInt(tour.basePrice || tour.price2 || '0')}
+                priceDisplay={getPriceDisplay(tour).text}
+                location={formatLocation(tour.location)}
                 rating={4.7}
                 reviews={50}
                 groupSize="2-6"

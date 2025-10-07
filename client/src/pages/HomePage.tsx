@@ -5,6 +5,7 @@ import TourCard from "@/components/TourCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Tour } from "@shared/schema";
+import { formatLocation, getPriceDisplay } from "@/lib/tourUtils";
 import heroImage from '@assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png';
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
@@ -121,7 +122,8 @@ export default function HomePage() {
                   description={tour.detalle || tour.description || ''}
                   duration={tour.duration || 'Various'}
                   difficulty="Moderate"
-                  price={parseInt(tour.basePrice || tour.price2 || '0')}
+                  priceDisplay={getPriceDisplay(tour).text}
+                  location={formatLocation(tour.location)}
                   rating={4.7}
                   reviews={50}
                   groupSize="2-6"

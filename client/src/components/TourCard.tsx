@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Users, Leaf } from "lucide-react";
+import { Star, Clock, Users, Leaf, MapPin } from "lucide-react";
 
 interface TourCardProps {
   id: string;
@@ -9,7 +9,9 @@ interface TourCardProps {
   description: string;
   duration: string;
   difficulty: "Easy" | "Moderate" | "Challenging";
-  price: number;
+  priceDisplay: string;
+  showPriceSubtext?: boolean;
+  location?: string;
   rating: number;
   reviews: number;
   groupSize: string;
@@ -29,13 +31,16 @@ export default function TourCard({
   description,
   duration,
   difficulty,
-  price,
+  priceDisplay,
+  showPriceSubtext = true,
+  location,
   rating,
   reviews,
   groupSize,
   onClick
 }: TourCardProps) {
   const DifficultyIcon = difficultyConfig[difficulty].icon;
+  const isMonetary = priceDisplay.startsWith('$');
 
   return (
     <Card 
@@ -68,7 +73,13 @@ export default function TourCard({
           {description}
         </p>
 
-        <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground flex-wrap">
+          {location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              <span>{location}</span>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             <span>{duration}</span>
@@ -86,8 +97,10 @@ export default function TourCard({
             <span className="text-sm text-muted-foreground">({reviews})</span>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-card-foreground">${price}</p>
-            <p className="text-xs text-muted-foreground">per person</p>
+            <p className={`${isMonetary ? 'text-2xl' : 'text-base'} font-bold text-card-foreground`}>
+              {priceDisplay}
+            </p>
+            {isMonetary && showPriceSubtext && <p className="text-xs text-muted-foreground">per person</p>}
           </div>
         </div>
       </CardContent>

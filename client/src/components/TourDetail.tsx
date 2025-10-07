@@ -11,7 +11,7 @@ interface TourDetailProps {
     images: string[];
     duration: string;
     difficulty: string;
-    price: number;
+    priceDisplay: string;
     rating: number;
     reviews: number;
     groupSize: string;
@@ -81,8 +81,12 @@ export default function TourDetail({ tour, onInquire }: TourDetailProps) {
 
               <div className="border-t border-border pt-6 mb-6">
                 <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-4xl font-bold">${tour.price}</span>
-                  <span className="text-muted-foreground">per person</span>
+                  <span className={`${tour.priceDisplay.startsWith('$') ? 'text-4xl' : 'text-2xl'} font-bold`}>
+                    {tour.priceDisplay}
+                  </span>
+                  {tour.priceDisplay.startsWith('$') && (
+                    <span className="text-muted-foreground">per person</span>
+                  )}
                 </div>
 
                 <div className="space-y-3 mb-4">
