@@ -1,102 +1,37 @@
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import HeroSection from "@/components/HeroSection";
 import TourCard from "@/components/TourCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { Tour } from "@shared/schema";
 import heroImage from '@assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png';
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
 import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
-import macawImage from '@assets/generated_images/Macaws_Amazon_rainforest_birds_fd5ba5b5.png';
-import canopyImage from '@assets/generated_images/Canopy_walkway_adventure_Amazon_06cf19ac.png';
 
-//todo: remove mock functionality
-const featuredTours = [
-  {
-    id: "1",
-    image: jaguarImage,
-    title: "Wildlife Expedition: Jaguar Tracking",
-    description: "Track the elusive jaguar through dense rainforest with expert guides and witness the Amazon's apex predator in its natural habitat.",
-    duration: "5 days",
-    difficulty: "Challenging" as const,
-    price: 899,
-    rating: 4.8,
-    reviews: 124,
-    groupSize: "Max 8"
-  },
-  {
-    id: "2",
-    image: dolphinImage,
-    title: "Pink Dolphin River Adventure",
-    description: "Experience the magic of the Amazon River and encounter the rare pink river dolphins during golden hour.",
-    duration: "3 days",
-    difficulty: "Easy" as const,
-    price: 649,
-    rating: 4.9,
-    reviews: 187,
-    groupSize: "Max 12"
-  },
-  {
-    id: "3",
-    image: canoeImage,
-    title: "Traditional Canoe Journey",
-    description: "Navigate peaceful tributaries in traditional canoes, discovering hidden wildlife and indigenous communities.",
-    duration: "4 days",
-    difficulty: "Moderate" as const,
-    price: 729,
-    rating: 4.7,
-    reviews: 95,
-    groupSize: "Max 10"
-  },
-  {
-    id: "4",
-    image: macawImage,
-    title: "Birdwatching Paradise",
-    description: "Spot over 300 species of colorful birds including macaws, toucans, and rare endemic species.",
-    duration: "3 days",
-    difficulty: "Easy" as const,
-    price: 579,
-    rating: 4.8,
-    reviews: 143,
-    groupSize: "Max 15"
-  },
-  {
-    id: "5",
-    image: canopyImage,
-    title: "Canopy Walkway Adventure",
-    description: "Walk among the treetops on suspended bridges and experience the rainforest from a bird's-eye perspective.",
-    duration: "2 days",
-    difficulty: "Moderate" as const,
-    price: 449,
-    rating: 4.6,
-    reviews: 76,
-    groupSize: "Max 12"
-  },
-  {
-    id: "6",
-    image: jaguarImage,
-    title: "Night Safari Experience",
-    description: "Discover the Amazon's nocturnal wildlife with expert guides during an unforgettable night safari.",
-    duration: "1 day",
-    difficulty: "Easy" as const,
-    price: 199,
-    rating: 4.9,
-    reviews: 201,
-    groupSize: "Max 8"
-  }
-];
+const getImageForTour = (tour: Tour, index: number) => {
+  const images = [jaguarImage, dolphinImage, canoeImage];
+  return images[index % images.length];
+};
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
 
+  const { data: tours, isLoading } = useQuery<Tour[]>({
+    queryKey: ['/api/tours'],
+  });
+
   const handleSearch = (destination: string) => {
     console.log('Search:', { destination });
-    setLocation('/tours');
+    setLocation(`/tours?location=${destination}`);
   };
 
   const handleTourClick = (id: string) => {
     setLocation(`/tour/${id}`);
   };
+
+  const featuredTours = tours?.slice(0, 6) || [];
 
   return (
     <div>
@@ -172,9 +107,32 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredTours.map((tour) => (
-              <TourCard key={tour.id} {...tour} onClick={handleTourClick} />
-            ))}
+            {isLoading ? (
+              <div data-testid="loading-tours" className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">Loading tours...</p>
+              </div>
+            ) : featuredTours.length > 0 ? (
+              featuredTours.map((tour, index) => (
+                <TourCard 
+                  key={tour.id} 
+                  id={tour.id}
+                  image={getImageForTour(tour, index)}
+                  title={tour.name}
+                  description={tour.detalle || tour.description || ''}
+                  duration={tour.duration || 'Various'}
+                  difficulty="Moderate"
+                  price={parseInt(tour.basePrice || tour.price2 || '0')}
+                  rating={4.7}
+                  reviews={50}
+                  groupSize="2-6"
+                  onClick={handleTourClick} 
+                />
+              ))
+            ) : (
+              <div data-testid="no-tours" className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No tours available at the moment.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
