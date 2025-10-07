@@ -1,15 +1,28 @@
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, User, Moon, Sun } from "lucide-react";
+import { Leaf, Menu, User, Moon, Sun, Languages } from "lucide-react";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavigationProps {
   transparent?: boolean;
   onMenuClick?: () => void;
 }
 
+const languages = [
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'pt', label: 'Português', flag: '🇧🇷' },
+];
+
 export default function Navigation({ transparent = false, onMenuClick }: NavigationProps) {
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [currentLang, setCurrentLang] = useState('en');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +88,34 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
           </div>
 
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  data-testid="button-language"
+                  variant="ghost"
+                  size="icon"
+                  className={transparent && !scrolled ? "text-white hover:text-white" : ""}
+                >
+                  <Languages className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {languages.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang.code}
+                    data-testid={`language-${lang.code}`}
+                    onClick={() => {
+                      setCurrentLang(lang.code);
+                      console.log('Language changed to:', lang.code);
+                    }}
+                    className={currentLang === lang.code ? 'bg-accent' : ''}
+                  >
+                    <span className="mr-2">{lang.flag}</span>
+                    {lang.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               data-testid="button-theme-toggle"
               variant="ghost"
