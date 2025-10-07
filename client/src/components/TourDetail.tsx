@@ -1,8 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Users, MapPin, Check, Calendar } from "lucide-react";
-import { useState } from "react";
+import { Star, Clock, Users, MapPin, Check, MessageCircle } from "lucide-react";
 
 interface TourDetailProps {
   tour: {
@@ -20,16 +19,13 @@ interface TourDetailProps {
     included: string[];
     itinerary: { day: number; title: string; description: string }[];
   };
-  onBook?: (tourId: string, date: string, guests: number) => void;
+  onInquire?: (tourId: string) => void;
 }
 
-export default function TourDetail({ tour, onBook }: TourDetailProps) {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [guests, setGuests] = useState(2);
-
-  const handleBook = () => {
-    onBook?.(tour.id, selectedDate, guests);
-    console.log('Booking:', { tourId: tour.id, date: selectedDate, guests });
+export default function TourDetail({ tour, onInquire }: TourDetailProps) {
+  const handleInquire = () => {
+    onInquire?.(tour.id);
+    console.log('Inquiry for tour:', tour.id);
   };
 
   return (
@@ -84,43 +80,25 @@ export default function TourDetail({ tour, onBook }: TourDetailProps) {
               </div>
 
               <div className="border-t border-border pt-6 mb-6">
-                <div className="flex items-baseline gap-2 mb-4">
+                <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-4xl font-bold">${tour.price}</span>
                   <span className="text-muted-foreground">per person</span>
                 </div>
 
                 <div className="space-y-3 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Date</label>
-                    <input
-                      data-testid="input-booking-date"
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-input bg-background"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Guests</label>
-                    <input
-                      data-testid="input-booking-guests"
-                      type="number"
-                      min="1"
-                      value={guests}
-                      onChange={(e) => setGuests(parseInt(e.target.value))}
-                      className="w-full px-4 py-2 rounded-lg border border-input bg-background"
-                    />
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Contact us to customize your experience and check availability for your preferred dates.
+                  </p>
                 </div>
 
                 <Button 
-                  data-testid="button-book-tour"
-                  onClick={handleBook}
+                  data-testid="button-inquire-tour"
+                  onClick={handleInquire}
                   className="w-full"
                   size="lg"
                 >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Book Now
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Inquire Now
                 </Button>
               </div>
             </CardContent>

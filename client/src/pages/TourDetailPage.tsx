@@ -127,14 +127,14 @@ export default function TourDetailPage() {
   const tourId = params?.id || "1";
   const tour = tourData[tourId] || tourData["1"];
 
-  const handleBook = (tourId: string, date: string, guests: number) => {
-    console.log('Booking tour:', { tourId, date, guests });
+  const handleInquire = (tourId: string) => {
+    console.log('Inquiry for tour:', tourId);
   };
 
   return (
     <div className="min-h-screen">
       <Navigation />
-      <TourDetail tour={tour} onBook={handleBook} />
+      <TourDetail tour={tour} onInquire={handleInquire} />
       
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <h2 className="font-serif text-3xl font-bold mb-8">What Our Guests Say</h2>

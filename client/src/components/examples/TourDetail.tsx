@@ -45,7 +45,7 @@ export default function TourDetailExample() {
   return (
     <TourDetail 
       tour={mockTour}
-      onBook={(id, date, guests) => console.log('Book tour:', { id, date, guests })}
+      onInquire={(id) => console.log('Inquire about tour:', id)}
     />
   );
 }

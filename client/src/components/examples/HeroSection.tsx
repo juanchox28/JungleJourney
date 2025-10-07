@@ -5,8 +5,8 @@ export default function HeroSectionExample() {
   return (
     <HeroSection 
       backgroundImage={heroImage}
-      onSearch={(location, date, guests) => {
-        console.log('Search:', { location, date, guests });
+      onSearch={(location) => {
+        console.log('Search:', { location });
       }}
     />
   );
