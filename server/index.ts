@@ -1,8 +1,16 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./vite";
 
 const app = express();
+
+// Enable CORS for the frontend domain
+app.use(cors({
+  origin: ["https://ayahuascapuertonarino.com", "http://localhost:5173"],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -51,9 +59,13 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Only serve static files if SERVE_STATIC is not set to 'false'
+    if (process.env.SERVE_STATIC !== 'false') {
+      serveStatic(app);
+    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
