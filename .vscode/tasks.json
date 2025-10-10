@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deploy Full Stack",
+      "type": "shell",
+      "command": "git",
+      "args": ["push", "origin", "main"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Push to main branch to trigger automated deployment"
+    },
+    {
+      "label": "Check Deployment Status",
+      "type": "shell",
+      "command": "echo",
+      "args": [
+        "🔍 Check deploym ent status:\n📊 GitHub Actions: https://github.com/YOUR_USERNAME/YOUR_REPO/actions\n🚀 Fly.io: https://fly.io/apps/jungle-tours-backend\n🌐 Frontend: https://yourdomain.com"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
+  ]
+}
