@@ -5,9 +5,16 @@ import { serveStatic, log } from "./vite";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173" // For local development
+];
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN);
+}
+
 // Enable CORS for the frontend domain
 app.use(cors({
-  origin: ["https://ayahuascapuertonarino.com", "http://localhost:5173"],
+  origin: allowedOrigins,
   credentials: true
 }));
 
