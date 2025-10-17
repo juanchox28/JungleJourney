@@ -6,6 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const getApiUrl = (path: string) => {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   return `${apiUrl}${path}`;
 };

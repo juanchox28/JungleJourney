@@ -10,7 +10,7 @@ export default function TourDetailExample() {
     images: [dolphinImage, canoeImage, dolphinImage, canoeImage],
     duration: "3 days, 2 nights",
     difficulty: "Easy",
-    price: 649,
+    priceDisplay: "$649",
     rating: 4.9,
     reviews: 187,
     groupSize: "Max 12 people",
