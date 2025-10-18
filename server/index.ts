@@ -67,7 +67,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     const { setupVite } = await import("./vite");
-    await setupVite(app, server);
+    await setupVite(app, server, app.get("env"));
   } else {
     // Only serve static files if SERVE_STATIC is not set to 'false'
     if (process.env.SERVE_STATIC !== 'false') {
