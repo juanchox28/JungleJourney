@@ -61,6 +61,7 @@ jobs:
           server: ${{ secrets.HOSTINGER_FTP_HOST }}
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          sync-method: "full"
           local-dir: ./dist/public/
           server-dir: ./public_html/
           exclude: |
