@@ -11,7 +11,7 @@ export default function TourCardExample() {
         description="Track the elusive jaguar through dense rainforest with expert guides"
         duration="5 days"
         difficulty="Challenging"
-        price={899}
+        priceDisplay="$899"
         rating={4.8}
         reviews={124}
         groupSize="Max 8"

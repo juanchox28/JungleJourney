@@ -2,6 +2,7 @@ import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import TourDetail from "@/components/TourDetail";
+import { getApiUrl } from "@/lib/utils";
 import ReviewCard from "@/components/ReviewCard";
 import type { Tour } from "@shared/schema";
 import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
@@ -68,7 +69,7 @@ export default function TourDetailPage() {
   const { data: tour, isLoading, error } = useQuery<Tour>({
     queryKey: ['/api/tours', tourId],
     queryFn: async () => {
-      const response = await fetch(`/api/tours/${tourId}`);
+      const response = await fetch(getApiUrl(`/api/tours/${tourId}`));
       if (!response.ok) throw new Error('Failed to fetch tour');
       return response.json();
     },

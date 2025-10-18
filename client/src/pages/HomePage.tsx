@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Tour } from "@shared/schema";
 import { formatLocation, getPriceDisplay } from "@/lib/tourUtils";
+import { getApiUrl } from "@/lib/utils";
 import heroImage from '@assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png';
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
@@ -21,6 +22,11 @@ export default function HomePage() {
 
   const { data: tours, isLoading } = useQuery<Tour[]>({
     queryKey: ['/api/tours'],
+    queryFn: async () => {
+      const response = await fetch(getApiUrl('/api/tours'));
+      if (!response.ok) throw new Error('Failed to fetch tours');
+      return response.json();
+    },
   });
 
   const handleSearch = (destination: string) => {

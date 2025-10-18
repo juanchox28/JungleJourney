@@ -6,6 +6,7 @@ import TourCard from "@/components/TourCard";
 import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
 import { formatLocation, getPriceDisplay } from "@/lib/tourUtils";
+import { getApiUrl } from "@/lib/utils";
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
 import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
@@ -30,7 +31,7 @@ export default function ToursPage() {
       if (locationFilter) {
         params.set('location', locationFilter);
       }
-      const response = await fetch(`/api/tours?${params}`);
+      const response = await fetch(getApiUrl(`/api/tours?${params}`));
       if (!response.ok) throw new Error('Failed to fetch tours');
       return response.json();
     },
