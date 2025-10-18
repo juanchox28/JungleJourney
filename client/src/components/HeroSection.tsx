@@ -39,7 +39,7 @@ export default function HeroSection({ backgroundImage, onSearch }: HeroSectionPr
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-12">
           <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-            Discover the Amazon
+            Amazonas Tours - Versión Final
           </h1>
           <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto drop-shadow-md">
             Immerse yourself in the world's most biodiverse rainforest
