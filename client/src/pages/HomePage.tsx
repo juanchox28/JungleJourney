@@ -47,7 +47,7 @@ export default function HomePage() {
       <section className="bg-primary/5 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl font-bold mb-4">Our Destinations</h2>
+            <h2 className="font-serif text-4xl font-bold mb-4">Our Amazing Destinations</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Three unique locations in the heart of the Amazon
             </p>
