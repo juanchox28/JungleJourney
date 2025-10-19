@@ -1,4 +1,5 @@
 name: Deploy Full Stack App
+
 on:
   push:
     branches: [ main, master ]
@@ -7,63 +8,66 @@ on:
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  VITE_API_BASE_URL: https://jungle-tours-backend.fly.dev
 
 jobs:
-  # Backend deployment to fly.io
+  # 🚀 Deploy Backend to Fly.io
   deploy-backend:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Build application
+      - name: 🏗️ Build backend
         run: npm run build
 
-      - name: Deploy to fly.io
+      - name: 🚀 Deploy to Fly.io
         uses: superfly/flyctl-actions@1.4
         with:
           args: "deploy --remote-only"
 
-  # Frontend build and deployment to Hostinger
+  # 🌐 Deploy Frontend to Hostinger via FTP
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: deploy-backend
+
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Build frontend
+      - name: 🏗️ Build frontend
         run: npm run build:client
         env:
-          VITE_API_BASE_URL: https://jungle-tours-backend.fly.dev
+          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
 
-      - name: Deploy to Hostinger via FTP
+      - name: 📤 Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.HOSTINGER_FTP_HOST }}
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          sync-method: "full"
           local-dir: ./dist/public/
           server-dir: ./public_html/
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
@@ -72,30 +76,31 @@ jobs:
             **/README.md
             **/.gitignore
 
-  # Create backup artifact (in case FTP fails)
+  # 💾 Backup artifact if FTP fails
   create-artifact:
     runs-on: ubuntu-latest
     needs: deploy-frontend
     if: failure()
+
     steps:
-      - name: Checkout code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Build frontend
+      - name: 🏗️ Build frontend
         run: npm run build:client
         env:
-          VITE_API_BASE_URL: https://jungle-tours-backend.fly.dev
+          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
 
-      - name: Upload build artifact
+      - name: 💾 Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build-${{ github.run_number }}
