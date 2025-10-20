@@ -68,30 +68,30 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
 
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/tours"
+              href="/hotel-booking"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
             >
-              Tours
+              Hotel Booking
             </Link>
             <Link
-              href="/accommodations"
+              href="/tour-booking"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
             >
-              Accommodations
+              Tour Booking
             </Link>
-            <button
-              data-testid="link-destinations"
-              className={`${textClass} hover:text-primary transition-colors font-medium`}
-              onClick={() => console.log('Navigate to destinations')}
-            >
-              Destinations
-            </button>
             <button
               data-testid="link-about"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
               onClick={() => console.log('Navigate to about')}
             >
               About
+            </button>
+            <button
+              data-testid="link-contact"
+              className={`${textClass} hover:text-primary transition-colors font-medium`}
+              onClick={() => console.log('Navigate to contact')}
+            >
+              Contact
             </button>
           </div>
 
