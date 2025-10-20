@@ -14,8 +14,16 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: any) {
-  // Dummy function for production - never called
-  console.log("setupVite called in production - this should not happen");
+  const { createServer: createViteServer } = await import('vite');
+
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa'
+  });
+
+  app.use(vite.middlewares);
+
+  log('Vite development server integrated');
 }
 
 export function serveStatic(app: Express) {

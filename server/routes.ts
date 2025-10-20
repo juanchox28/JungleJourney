@@ -4,8 +4,64 @@ import { storage } from "./storage";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
 import path from "path";
+import multer from "multer";
+import fetch from "node-fetch";
+import { sendConfirmationEmail } from "./emailService.js";
+// import sharp from "sharp";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Wompi configuration
+  const WOMPI_BASE = process.env.WOMPI_BASE || "https://sandbox.wompi.co/v1";
+  const WOMPI_PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
+  const WOMPI_PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY;
+  const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5000";
+
+  // Configure multer for image uploads
+  const multerStorage = multer.memoryStorage();
+  const upload = multer({
+    storage: multerStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
+  // Image upload endpoint
+  app.post("/api/upload/images", upload.array('images', 10), async (req, res) => {
+    try {
+      if (!req.files || !Array.isArray(req.files)) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      const uploadedUrls: string[] = [];
+
+      for (const file of req.files as Express.Multer.File[]) {
+        // Generate unique filename
+        const filename = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
+        const filepath = path.join(process.cwd(), 'client', 'public', 'uploads', filename);
+
+        // Ensure uploads directory exists
+        const uploadsDir = path.join(process.cwd(), 'client', 'public', 'uploads');
+        await import('fs').then(fs => fs.promises.mkdir(uploadsDir, { recursive: true }));
+
+        // For now, just save the file without processing
+        // TODO: Re-enable Sharp when platform issues are resolved
+        await import('fs').then(fs => fs.promises.writeFile(filepath, file.buffer));
+
+        uploadedUrls.push(`/uploads/${filename}`);
+      }
+
+      res.json({ urls: uploadedUrls });
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      res.status(500).json({ error: 'Failed to upload images' });
+    }
+  });
+
   app.get("/api/tours", async (req, res) => {
     try {
       const { location, category } = req.query;
@@ -59,6 +115,461 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting version info:', error);
       res.status(500).json({ error: 'Failed to get version info' });
+    }
+  });
+
+  app.get("/api/accommodations", async (req, res) => {
+    try {
+      const { location, type } = req.query;
+      const filters: { location?: string; type?: string } = {};
+
+      if (location && typeof location === 'string') {
+        filters.location = location;
+      }
+
+      if (type && typeof type === 'string') {
+        filters.type = type;
+      }
+
+      const accommodations = await storage.getAccommodations(filters);
+      res.json(accommodations);
+    } catch (error) {
+      console.error('Error fetching accommodations:', error);
+      res.status(500).json({ error: 'Failed to fetch accommodations' });
+    }
+  });
+
+  app.get("/api/accommodations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const accommodation = await storage.getAccommodation(id);
+
+      if (!accommodation) {
+        return res.status(404).json({ error: 'Accommodation not found' });
+      }
+
+      res.json(accommodation);
+    } catch (error) {
+      console.error('Error fetching accommodation:', error);
+      res.status(500).json({ error: 'Failed to fetch accommodation' });
+    }
+  });
+
+  app.post("/api/bookings", async (req, res) => {
+    try {
+      const bookingData = req.body;
+      const booking = await storage.createBooking(bookingData);
+      res.status(201).json(booking);
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      res.status(500).json({ error: 'Failed to create booking' });
+    }
+  });
+
+  // -------------------- TOUR BOOKING ENDPOINT --------------------
+  app.post("/api/create-tour-booking", async (req, res) => {
+    console.log(`🎯 Create tour booking request from ${req.ip} at ${new Date().toISOString()}`);
+    console.log('Request body:', req.body);
+
+    try {
+      const { guestName, guestEmail, guestCount, tourDate, tourId, totalPrice } = req.body;
+
+      if (!WOMPI_PRIVATE_KEY) {
+        console.error('❌ WOMPI_PRIVATE_KEY not configured');
+        return res.status(500).json({
+          ok: false,
+          error: "Wompi private key not configured",
+          message: "Please set WOMPI_PRIVATE_KEY in .env file"
+        });
+      }
+
+      const reference = `BK-${Date.now()}`;
+
+      // Create booking in storage
+      const booking = await storage.createBooking({
+        tourId,
+        guestName,
+        guestEmail,
+        guestCount: parseInt(guestCount),
+        tourDate,
+        totalPrice: totalPrice.toString(),
+        reference,
+        status: "payment_pending"
+      });
+
+      console.log("💾 Tour booking created:", booking);
+
+      // Get tour details for description
+      const tour = await storage.getTour(tourId);
+
+      // -------------------- WOMPI CALL --------------------
+      const payload = {
+        name: `JungleJourney Tour Booking - ${reference}`,
+        amount_in_cents: Math.round(parseFloat(totalPrice) * 100),
+        currency: "COP",
+        single_use: true,
+        description: `Tour booking for ${guestName} - ${tour?.name || 'Tour'} on ${tourDate} - ${guestCount} participant(s)`,
+        redirect_url: `${FRONTEND_URL}/booking-success.html?reference=${reference}&type=tour&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&tourDate=${tourDate}&guests=${guestCount}&amount=${totalPrice}`,
+        collect_shipping: false,
+      };
+
+      console.log("📡 Sending to Wompi:", payload);
+
+      const wompiRes = await fetch(`${WOMPI_BASE}/payment_links`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${WOMPI_PRIVATE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const wompiData = await wompiRes.json() as any;
+      console.log("📡 Wompi response:", wompiData);
+
+      if (wompiData.data && wompiData.data.id) {
+        const updatedBooking = {
+          ...booking,
+          wompiPaymentId: wompiData.data.id,
+          checkoutUrl: `https://checkout.wompi.co/l/${wompiData.data.id}`,
+          status: "payment_pending"
+        };
+
+        res.json({
+          ok: true,
+          booking: updatedBooking,
+          checkout_url: `https://checkout.wompi.co/l/${wompiData.data.id}`,
+          wompi_response: wompiData
+        });
+      } else {
+        console.error("❌ Error en respuesta de Wompi:", wompiData);
+
+        const updatedBooking = {
+          ...booking,
+          status: "payment_failed",
+          paymentStatus: "ERROR"
+        };
+
+        res.status(400).json({
+          ok: false,
+          booking: updatedBooking,
+          error: wompiData.error || "Failed to create payment link",
+          wompi_response: wompiData
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error en /api/create-tour-booking:", err);
+      res.status(500).json({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        details: "Internal server error"
+      });
+    }
+  });
+
+  // -------------------- WOMPI PAYMENT INTEGRATION --------------------
+  app.post("/api/create-accommodation-booking", async (req, res) => {
+    console.log(`💳 Create accommodation booking request from ${req.ip} at ${new Date().toISOString()}`);
+    console.log('Request body:', req.body);
+
+    try {
+      const { guestName, guestEmail, guestCount, checkInDate, checkOutDate, accommodationId, totalPrice } = req.body;
+
+      if (!WOMPI_PRIVATE_KEY) {
+        console.error('❌ WOMPI_PRIVATE_KEY not configured');
+        return res.status(500).json({
+          ok: false,
+          error: "Wompi private key not configured",
+          message: "Please set WOMPI_PRIVATE_KEY in .env file"
+        });
+      }
+
+      const reference = `BK-${Date.now()}`;
+
+      // Create booking in storage
+      const booking = await storage.createBooking({
+        accommodationId,
+        guestName,
+        guestEmail,
+        guestCount: parseInt(guestCount),
+        checkInDate,
+        checkOutDate,
+        totalPrice: totalPrice.toString(),
+        reference,
+        status: "payment_pending"
+      });
+
+      console.log("💾 Accommodation booking created:", booking);
+
+      // -------------------- WOMPI CALL --------------------
+      const payload = {
+        name: `JungleJourney Accommodation Booking - ${reference}`,
+        amount_in_cents: Math.round(parseFloat(totalPrice) * 100),
+        currency: "COP",
+        single_use: true,
+        description: `Accommodation booking for ${guestName} - ${checkInDate} to ${checkOutDate} - ${guestCount} guest(s)`,
+        redirect_url: `${FRONTEND_URL}/booking-success.html?reference=${reference}&type=accommodation&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&checkIn=${checkInDate}&checkOut=${checkOutDate}&guests=${guestCount}&amount=${totalPrice}`,
+        collect_shipping: false,
+      };
+
+      console.log("📡 Sending to Wompi:", payload);
+
+      const wompiRes = await fetch(`${WOMPI_BASE}/payment_links`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${WOMPI_PRIVATE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const wompiData = await wompiRes.json() as any;
+      console.log("📡 Wompi response:", wompiData);
+
+      if (wompiData.data && wompiData.data.id) {
+        const updatedBooking = {
+          ...booking,
+          wompiPaymentId: wompiData.data.id,
+          checkoutUrl: `https://checkout.wompi.co/l/${wompiData.data.id}`,
+          status: "payment_pending"
+        };
+
+        // Update booking with payment info
+        // Note: In a real implementation, you'd update the database record here
+
+        res.json({
+          ok: true,
+          booking: updatedBooking,
+          checkout_url: `https://checkout.wompi.co/l/${wompiData.data.id}`,
+          wompi_response: wompiData
+        });
+      } else {
+        console.error("❌ Error en respuesta de Wompi:", wompiData);
+
+        const updatedBooking = {
+          ...booking,
+          status: "payment_failed",
+          paymentStatus: "ERROR"
+        };
+
+        res.status(400).json({
+          ok: false,
+          booking: updatedBooking,
+          error: wompiData.error || "Failed to create payment link",
+          wompi_response: wompiData
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error en /api/create-accommodation-booking:", err);
+      res.status(500).json({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        details: "Internal server error"
+      });
+    }
+  });
+
+  // Payment status check
+  app.get("/api/payment-status/:reference", async (req, res) => {
+    try {
+      const { reference } = req.params;
+
+      // Find booking by reference
+      const bookings = await storage.getBookings();
+      const booking = bookings.find(b => b.reference === reference);
+
+      if (!booking) {
+        return res.status(404).json({ ok: false, error: "Booking not found" });
+      }
+
+      if (booking.wompiPaymentId && WOMPI_PUBLIC_KEY) {
+        const paymentRes = await fetch(`${WOMPI_BASE}/transactions/${booking.wompiPaymentId}`, {
+          headers: {
+            Authorization: `Bearer ${WOMPI_PUBLIC_KEY}`,
+          },
+        });
+
+        const paymentData = await paymentRes.json() as any;
+
+        if (paymentData.data) {
+          const statusMap = {
+            'APPROVED': 'confirmed',
+            'DECLINED': 'cancelled',
+            'VOIDED': 'cancelled',
+            'ERROR': 'payment_failed',
+            'PENDING': 'pending'
+          };
+
+          const newStatus = statusMap[paymentData.data.status as keyof typeof statusMap] || 'pending';
+
+          // Update booking status
+          booking.status = newStatus;
+          booking.paymentStatus = paymentData.data.status;
+          booking.paymentData = JSON.stringify(paymentData.data);
+
+          // Send confirmation email if payment was approved
+          if (newStatus === 'confirmed') {
+            await sendConfirmationEmail({
+              reference: booking.reference || '',
+              name: booking.guestName,
+              email: booking.guestEmail,
+              checkIn: booking.checkInDate || undefined,
+              checkOut: booking.checkOutDate || undefined,
+              guests: booking.guestCount,
+              room: 'Accommodation', // Generic for now
+              amount: booking.totalPrice ? parseFloat(booking.totalPrice) : 0
+            });
+          }
+        }
+      }
+
+      res.json({ ok: true, booking });
+    } catch (err) {
+      console.error("❌ Error checking payment status:", err);
+      res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  // Email confirmation endpoint
+  app.post("/api/send-confirmation-email", async (req, res) => {
+    try {
+      const { reference, name, email, checkIn, checkOut, guests, room, amount } = req.body;
+
+      const booking = {
+        reference,
+        name,
+        email,
+        checkIn,
+        checkOut,
+        guests,
+        room,
+        amount
+      };
+
+      const result = await sendConfirmationEmail(booking);
+
+      if (result.success) {
+        console.log(`✅ Email de confirmación enviado para reserva ${reference}`);
+        res.json({
+          ok: true,
+          message: 'Email enviado exitosamente',
+          messageId: result.messageId
+        });
+      } else {
+        console.warn(`⚠️ No se pudo enviar email para reserva ${reference}:`, result.error);
+        res.json({
+          ok: false,
+          error: result.error,
+          message: 'Email no enviado (configuración requerida)'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error en /api/send-confirmation-email:', error);
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        message: 'Error interno del servidor'
+      });
+    }
+  });
+
+  // Admin routes - simple password protection for development
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No authorization token provided' });
+    }
+    const token = authHeader.substring(7);
+    if (token !== ADMIN_PASSWORD) {
+      return res.status(403).json({ error: 'Invalid admin password' });
+    }
+    next();
+  };
+
+  // Tours CRUD
+  app.post("/api/admin/tours", requireAdmin, async (req, res) => {
+    try {
+      const tour = await storage.createTour(req.body);
+      res.status(201).json(tour);
+    } catch (error) {
+      console.error('Error creating tour:', error);
+      res.status(500).json({ error: 'Failed to create tour' });
+    }
+  });
+
+  app.put("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+    try {
+      // For in-memory storage, we'll recreate the tour
+      const updatedTour = { ...req.body, id: req.params.id };
+      // Note: In a real database, you'd update the existing record
+      res.json(updatedTour);
+    } catch (error) {
+      console.error('Error updating tour:', error);
+      res.status(500).json({ error: 'Failed to update tour' });
+    }
+  });
+
+  app.delete("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+    try {
+      // For in-memory storage, we'd remove from the map
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting tour:', error);
+      res.status(500).json({ error: 'Failed to delete tour' });
+    }
+  });
+
+  // Accommodations CRUD
+  app.post("/api/admin/accommodations", requireAdmin, async (req, res) => {
+    try {
+      const accommodation = await storage.createAccommodation(req.body);
+      res.status(201).json(accommodation);
+    } catch (error) {
+      console.error('Error creating accommodation:', error);
+      res.status(500).json({ error: 'Failed to create accommodation' });
+    }
+  });
+
+  app.put("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+    try {
+      const updatedAccommodation = { ...req.body, id: req.params.id };
+      res.json(updatedAccommodation);
+    } catch (error) {
+      console.error('Error updating accommodation:', error);
+      res.status(500).json({ error: 'Failed to update accommodation' });
+    }
+  });
+
+  app.delete("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+      res.status(500).json({ error: 'Failed to delete accommodation' });
+    }
+  });
+
+  // Bookings management
+  app.get("/api/admin/bookings", requireAdmin, async (req, res) => {
+    try {
+      const bookings = await storage.getBookings();
+      res.json(bookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  });
+
+  app.put("/api/admin/bookings/:id", requireAdmin, async (req, res) => {
+    try {
+      const updatedBooking = { ...req.body, id: req.params.id };
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      res.status(500).json({ error: 'Failed to update booking' });
     }
   });
 

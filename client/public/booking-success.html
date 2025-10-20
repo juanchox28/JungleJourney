@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed - JungleJourney</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <div class="max-w-2xl mx-auto px-4 py-16">
+        <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Booking Confirmed!</h1>
+            <p class="text-lg text-gray-600 mb-6">Thank you for choosing JungleJourney. Your booking has been confirmed.</p>
+
+            <div id="booking-details" class="bg-gray-50 rounded-lg p-6 mb-6 text-left">
+                <h3 class="text-xl font-semibold mb-4">Booking Details</h3>
+                <div class="space-y-2">
+                    <p><span class="font-medium">Reference:</span> <span id="reference">-</span></p>
+                    <p><span class="font-medium">Name:</span> <span id="name">-</span></p>
+                    <p><span class="font-medium">Email:</span> <span id="email">-</span></p>
+                    <p id="dates-line" style="display: none;"><span class="font-medium">Dates:</span> <span id="checkin">-</span> to <span id="checkout">-</span></p>
+                    <p id="guests-line" style="display: none;"><span class="font-medium">Guests:</span> <span id="guests">-</span></p>
+                    <p><span class="font-medium">Amount:</span> $<span id="amount">-</span></p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p class="text-blue-800">
+                    <strong>What's next?</strong><br>
+                    You will receive a confirmation email shortly with all the details and next steps for your adventure.
+                </p>
+            </div>
+
+            <div class="flex gap-4 justify-center">
+                <a href="/" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
+                    Return to Home
+                </a>
+                <a href="/accommodations" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    Book Another Stay
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const reference = urlParams.get('reference');
+        const name = urlParams.get('name');
+        const email = urlParams.get('email');
+        const checkIn = urlParams.get('checkIn');
+        const checkOut = urlParams.get('checkOut');
+        const guests = urlParams.get('guests');
+        const amount = urlParams.get('amount');
+
+        // Update the page with booking details
+        if (reference) document.getElementById('reference').textContent = reference;
+        if (name) document.getElementById('name').textContent = decodeURIComponent(name);
+        if (email) document.getElementById('email').textContent = decodeURIComponent(email);
+        if (amount) document.getElementById('amount').textContent = amount;
+
+        if (checkIn && checkOut) {
+            document.getElementById('checkin').textContent = checkIn;
+            document.getElementById('checkout').textContent = checkOut;
+            document.getElementById('dates-line').style.display = 'block';
+        }
+
+        if (guests) {
+            document.getElementById('guests').textContent = guests;
+            document.getElementById('guests-line').style.display = 'block';
+        }
+
+        // Check payment status after a short delay
+        setTimeout(() => {
+            if (reference) {
+                fetch(`/api/payment-status/${reference}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ok && data.booking) {
+                            console.log('Payment status:', data.booking.status);
+                            // You could update the UI based on payment status here
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking payment status:', error);
+                    });
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

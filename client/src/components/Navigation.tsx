@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Leaf, Menu, User, Moon, Sun, Languages } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,21 +67,26 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
           </div>
 
           <div className="hidden md:flex items-center gap-8">
-            <button 
-              data-testid="link-tours"
+            <Link
+              href="/tours"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
-              onClick={() => console.log('Navigate to tours')}
             >
               Tours
-            </button>
-            <button 
+            </Link>
+            <Link
+              href="/accommodations"
+              className={`${textClass} hover:text-primary transition-colors font-medium`}
+            >
+              Accommodations
+            </Link>
+            <button
               data-testid="link-destinations"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
               onClick={() => console.log('Navigate to destinations')}
             >
               Destinations
             </button>
-            <button 
+            <button
               data-testid="link-about"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
               onClick={() => console.log('Navigate to about')}

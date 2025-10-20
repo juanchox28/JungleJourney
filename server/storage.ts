@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Tour, type InsertTour } from "@shared/schema";
+import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
 import { randomUUID } from "crypto";
 import toursJsonData from "../attached_assets/tours_data.json";
 
@@ -6,10 +6,17 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   getTours(filters?: { location?: string; category?: string }): Promise<Tour[]>;
   getTour(id: string): Promise<Tour | undefined>;
   createTour(tour: InsertTour): Promise<Tour>;
+
+  getAccommodations(filters?: { location?: string; type?: string }): Promise<Accommodation[]>;
+  getAccommodation(id: string): Promise<Accommodation | undefined>;
+  createAccommodation(accommodation: InsertAccommodation): Promise<Accommodation>;
+
+  getBookings(): Promise<Booking[]>;
+  createBooking(booking: InsertBooking): Promise<Booking>;
 }
 
 function parseLocation(locationStr: string): string {
@@ -22,17 +29,26 @@ function parseLocation(locationStr: string): string {
 
 function cleanPrice(priceStr: string): string {
   if (!priceStr) return '';
-  return priceStr.replace('.', '').replace(',00 COP', '').trim();
+  return priceStr
+    .replace(/\./g, '') // Remove all dots
+    .replace(/,00\s*COP\s*$/i, '') // Remove ",00 COP" at end (case insensitive)
+    .replace(/[^\d]/g, '') // Remove any remaining non-digits
+    .trim();
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private tours: Map<string, Tour>;
+  private accommodations: Map<string, Accommodation>;
+  private bookings: Map<string, Booking>;
 
   constructor() {
     this.users = new Map();
     this.tours = new Map();
+    this.accommodations = new Map();
+    this.bookings = new Map();
     this.initializeTours();
+    this.initializeAccommodations();
   }
 
   private initializeTours() {
@@ -65,6 +81,54 @@ export class MemStorage implements IStorage {
     });
     
     console.log(`Initialized ${this.tours.size} tours in memory storage`);
+  }
+
+  private initializeAccommodations() {
+    // Sample accommodations data
+    const sampleAccommodations: Accommodation[] = [
+      {
+        id: randomUUID(),
+        name: "Amazon River Lodge",
+        type: "lodge",
+        description: "Luxurious riverside lodge with stunning Amazon views",
+        location: "leticia",
+        pricePerNight: "250000",
+        amenities: JSON.stringify(["WiFi", "Restaurant", "Bar", "Guided Tours", "Spa"]),
+        images: JSON.stringify(["/images/lodge1.jpg", "/images/lodge2.jpg"]),
+        maxGuests: 4,
+        availabilityStatus: "available"
+      },
+      {
+        id: randomUUID(),
+        name: "Jungle Cabins",
+        type: "cabin",
+        description: "Authentic wooden cabins immersed in the rainforest",
+        location: "puerto-narino",
+        pricePerNight: "180000",
+        amenities: JSON.stringify(["Private Bathroom", "Mosquito Nets", "Eco-Toilets", "Hiking Trails"]),
+        images: JSON.stringify(["/images/cabin1.jpg", "/images/cabin2.jpg"]),
+        maxGuests: 2,
+        availabilityStatus: "available"
+      },
+      {
+        id: randomUUID(),
+        name: "Riverside Hotel",
+        type: "hotel",
+        description: "Modern hotel with river views and city access",
+        location: "leticia",
+        pricePerNight: "320000",
+        amenities: JSON.stringify(["Pool", "Restaurant", "Room Service", "Conference Room", "Laundry"]),
+        images: JSON.stringify(["/images/hotel1.jpg", "/images/hotel2.jpg"]),
+        maxGuests: 6,
+        availabilityStatus: "available"
+      }
+    ];
+
+    sampleAccommodations.forEach(accommodation => {
+      this.accommodations.set(accommodation.id, accommodation);
+    });
+
+    console.log(`Initialized ${this.accommodations.size} accommodations in memory storage`);
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -123,6 +187,71 @@ export class MemStorage implements IStorage {
     };
     this.tours.set(id, tour);
     return tour;
+  }
+
+  async getAccommodations(filters?: { location?: string; type?: string }): Promise<Accommodation[]> {
+    let accommodations = Array.from(this.accommodations.values());
+
+    if (filters?.location) {
+      accommodations = accommodations.filter(acc => acc.location === filters.location);
+    }
+
+    if (filters?.type) {
+      accommodations = accommodations.filter(acc => acc.type === filters.type);
+    }
+
+    return accommodations;
+  }
+
+  async getAccommodation(id: string): Promise<Accommodation | undefined> {
+    return this.accommodations.get(id);
+  }
+
+  async createAccommodation(insertAccommodation: InsertAccommodation): Promise<Accommodation> {
+    const id = randomUUID();
+    const accommodation: Accommodation = {
+      id,
+      name: insertAccommodation.name,
+      type: insertAccommodation.type,
+      description: insertAccommodation.description ?? null,
+      location: insertAccommodation.location ?? null,
+      pricePerNight: insertAccommodation.pricePerNight ?? null,
+      amenities: insertAccommodation.amenities ?? null,
+      images: insertAccommodation.images ?? null,
+      maxGuests: insertAccommodation.maxGuests ?? null,
+      availabilityStatus: insertAccommodation.availabilityStatus ?? "available",
+    };
+    this.accommodations.set(id, accommodation);
+    return accommodation;
+  }
+
+  async getBookings(): Promise<Booking[]> {
+    return Array.from(this.bookings.values());
+  }
+
+  async createBooking(insertBooking: InsertBooking): Promise<Booking> {
+    const id = randomUUID();
+    const booking: Booking = {
+      id,
+      accommodationId: insertBooking.accommodationId ?? null,
+      tourId: insertBooking.tourId ?? null,
+      guestName: insertBooking.guestName,
+      guestEmail: insertBooking.guestEmail,
+      guestCount: insertBooking.guestCount,
+      checkInDate: insertBooking.checkInDate ?? null,
+      checkOutDate: insertBooking.checkOutDate ?? null,
+      tourDate: insertBooking.tourDate ?? null,
+      totalPrice: insertBooking.totalPrice ?? null,
+      status: insertBooking.status ?? "pending",
+      createdAt: insertBooking.createdAt ?? new Date().toISOString(),
+      reference: insertBooking.reference ?? null,
+      wompiPaymentId: insertBooking.wompiPaymentId ?? null,
+      checkoutUrl: insertBooking.checkoutUrl ?? null,
+      paymentStatus: insertBooking.paymentStatus ?? null,
+      paymentData: insertBooking.paymentData ?? null,
+    };
+    this.bookings.set(id, booking);
+    return booking;
   }
 }
 
