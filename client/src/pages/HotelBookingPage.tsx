@@ -222,7 +222,7 @@ export default function HotelBookingPage() {
       };
 
       try {
-        const response = await fetch('/api/create-accommodation-booking', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-accommodation-booking`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -257,7 +257,7 @@ export default function HotelBookingPage() {
     };
 
     try {
-      const response = await fetch('/api/create-accommodation-booking', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-accommodation-booking`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
