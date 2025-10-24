@@ -88,6 +88,18 @@ export class MemStorage implements IStorage {
     const sampleAccommodations: Accommodation[] = [
       {
         id: randomUUID(),
+        name: "Hotel Ayahuasca",
+        type: "hotel",
+        description: "Experience authentic Amazon hospitality in our riverside lodge. Traditional ceremonies, comfortable rooms, and direct access to the rainforest.",
+        location: "leticia",
+        pricePerNight: "150000",
+        amenities: JSON.stringify(["WiFi", "Restaurant", "Traditional Ceremonies", "Guided Tours", "Ayahuasca Retreats"]),
+        images: JSON.stringify(["https://conexion-amazonas.com/wp-content/uploads/2025/05/DSCF0164-scaled.jpg"]),
+        maxGuests: 8,
+        availabilityStatus: "available"
+      },
+      {
+        id: randomUUID(),
         name: "Amazon River Lodge",
         type: "lodge",
         description: "Luxurious riverside lodge with stunning Amazon views",
@@ -249,6 +261,7 @@ export class MemStorage implements IStorage {
       checkoutUrl: insertBooking.checkoutUrl ?? null,
       paymentStatus: insertBooking.paymentStatus ?? null,
       paymentData: insertBooking.paymentData ?? null,
+      paymentMethod: insertBooking.paymentMethod ?? null,
     };
     this.bookings.set(id, booking);
     return booking;

@@ -25,7 +25,7 @@ export async function sendConfirmationEmail(booking: BookingData) {
       };
     }
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: emailUser,
@@ -36,29 +36,29 @@ export async function sendConfirmationEmail(booking: BookingData) {
     const mailOptions = {
       from: emailUser,
       to: booking.email,
-      subject: `Booking Confirmation - ${booking.reference}`,
+      subject: `Confirmación de Reserva - ${booking.reference}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">Booking Confirmation</h1>
-          <p>Dear ${booking.name},</p>
-          <p>Thank you for your booking! Here are your booking details:</p>
+          <h1 style="color: #2563eb;">Confirmación de Reserva</h1>
+          <p>Estimado ${booking.name},</p>
+          <p>¡Gracias por su reserva! Aquí están los detalles de su reserva:</p>
 
           <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Booking Details:</h3>
-            <p><strong>Reference:</strong> ${booking.reference}</p>
-            <p><strong>Name:</strong> ${booking.name}</p>
-            <p><strong>Email:</strong> ${booking.email}</p>
+            <h3>Detalles de la Reserva:</h3>
+            <p><strong>Referencia:</strong> ${booking.reference}</p>
+            <p><strong>Nombre:</strong> ${booking.name}</p>
+            <p><strong>Correo Electrónico:</strong> ${booking.email}</p>
             ${booking.checkIn && booking.checkOut ? `
-            <p><strong>Check-in:</strong> ${booking.checkIn}</p>
-            <p><strong>Check-out:</strong> ${booking.checkOut}</p>
+            <p><strong>Fecha de Entrada:</strong> ${booking.checkIn}</p>
+            <p><strong>Fecha de Salida:</strong> ${booking.checkOut}</p>
             ` : ''}
-            ${booking.guests ? `<p><strong>Guests:</strong> ${booking.guests}</p>` : ''}
-            ${booking.room ? `<p><strong>Accommodation:</strong> ${booking.room}</p>` : ''}
-            ${booking.amount ? `<p><strong>Total Amount:</strong> $${booking.amount.toLocaleString()}</p>` : ''}
+            ${booking.guests ? `<p><strong>Número de Huéspedes:</strong> ${booking.guests}</p>` : ''}
+            ${booking.room ? `<p><strong>Habitación:</strong> ${booking.room}</p>` : ''}
+            ${booking.amount ? `<p><strong>Monto Total:</strong> $${booking.amount.toLocaleString('es-CO')}</p>` : ''}
           </div>
 
-          <p>If you have any questions, please don't hesitate to contact us.</p>
-          <p>Best regards,<br>JungleJourney Team</p>
+          <p>Si tiene alguna pregunta, no dude en contactarnos.</p>
+          <p>Atentamente,<br>Equipo de Conexion-Amazonas</p>
         </div>
       `
     };

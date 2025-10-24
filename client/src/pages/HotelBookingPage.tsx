@@ -23,6 +23,7 @@ export default function HotelBookingPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<{[key: string]: number}>({});
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
@@ -121,6 +122,28 @@ export default function HotelBookingPage() {
   };
 
   const handleRoomQuantityChange = (roomId: string, quantity: number) => {
+    // Prevent adding more rooms than needed for total guests
+    const currentSelectedGuests = Object.entries(selectedRooms).reduce((total, [rId, qty]) => {
+      if (rId !== roomId) { // Exclude current room being modified
+        const room = rooms.find(r => r.id === rId);
+        if (room && qty > 0) {
+          total += room.capacity * qty;
+        }
+      }
+      return total;
+    }, 0);
+
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    // Calculate what the total would be if we add this quantity
+    const newTotalGuests = currentSelectedGuests + (room.capacity * quantity);
+
+    // Don't allow if it would exceed total guests needed
+    if (quantity > 0 && newTotalGuests > totalGuests) {
+      return; // Block the change
+    }
+
     const newSelectedRooms = { ...selectedRooms };
     if (quantity > 0) {
       newSelectedRooms[roomId] = quantity;
@@ -130,7 +153,13 @@ export default function HotelBookingPage() {
     setSelectedRooms(newSelectedRooms);
 
     // Show booking form if we have enough rooms for guests
-    const selectedGuests = calculateSelectedGuests();
+    const selectedGuests = Object.entries(newSelectedRooms).reduce((total, [rId, qty]) => {
+      const r = rooms.find(r => r.id === rId);
+      if (r && qty > 0) {
+        total += r.capacity * qty;
+      }
+      return total;
+    }, 0);
     if (selectedGuests >= totalGuests && Object.keys(newSelectedRooms).length > 0) {
       setShowBookingForm(true);
     } else {
@@ -152,6 +181,21 @@ export default function HotelBookingPage() {
     document.getElementById('rooms-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const isCashPaymentAvailable = () => {
+    if (!checkInDate) return false;
+    const checkIn = new Date(checkInDate);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Reset time to compare dates only
+    checkIn.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    return checkIn.getTime() === today.getTime() || checkIn.getTime() === tomorrow.getTime();
+  };
+
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -163,7 +207,45 @@ export default function HotelBookingPage() {
       return;
     }
 
-    // Create booking data
+    // For cash payments, handle differently
+    if (paymentMethod === 'cash') {
+      const bookingData = {
+        guestName,
+        guestEmail,
+        guestCount: selectedGuests,
+        checkInDate,
+        checkOutDate,
+        accommodationId: Object.keys(selectedRooms)[0], // Use first selected room for simplicity
+        totalPrice,
+        paymentMethod: 'cash',
+        status: 'confirmed' // Cash payments are immediately confirmed
+      };
+
+      try {
+        const response = await fetch('/api/create-accommodation-booking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bookingData),
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          // Redirect to success page for cash payment
+          window.location.href = `${data.success_url || '/booking-success.html'}?reference=${data.booking?.reference || ''}&type=accommodation&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&checkIn=${checkInDate}&checkOut=${checkOutDate}&guests=${selectedGuests}&amount=${totalPrice}&payment=cash`;
+        } else {
+          alert('Error creating booking: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Booking error:', error);
+        alert('Error creating booking. Please try again.');
+      }
+      return;
+    }
+
+    // Card payment logic (existing)
     const bookingData = {
       guestName,
       guestEmail,
@@ -206,10 +288,146 @@ export default function HotelBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-green-400/20 rounded-full blur-xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-blue-400/10 rounded-full blur-2xl"></div>
+      </div>
+
+      {/* Reservation Details - Mobile: Bottom, Desktop: Right Sidebar */}
+      <div className="fixed bottom-0 left-0 right-0 md:right-0 md:top-0 md:h-full md:w-80 bg-white/95 backdrop-blur-sm border-t md:border-t-0 md:border-l border-gray-200 shadow-xl z-50 md:overflow-y-auto">
+        <div className="p-4 md:p-6 max-h-56 md:max-h-none overflow-y-auto">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-primary" />
+            Detalles de Reserva
+          </h3>
+
+          <div className="space-y-3 md:space-y-4">
+            {/* Dates */}
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+              <div className="flex items-center text-sm text-gray-600 mb-2">
+                <Calendar className="w-4 h-4 mr-2" />
+                Fechas
+              </div>
+              <div className="text-sm">
+                {checkInDate ? (
+                  <div>
+                    <div className="font-medium text-gray-900">Entrada: {new Date(checkInDate).toLocaleDateString('es-CO')}</div>
+                    {checkOutDate && (
+                      <div className="font-medium text-gray-900">Salida: {new Date(checkOutDate).toLocaleDateString('es-CO')}</div>
+                    )}
+                    {checkInDate && checkOutDate && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {calculateNights()} noche{calculateNights() !== 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-400">Selecciona fechas</div>
+                )}
+              </div>
+            </div>
+
+            {/* Guests */}
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+              <div className="flex items-center text-sm text-gray-600 mb-2">
+                <Users className="w-4 h-4 mr-2" />
+                Huéspedes
+              </div>
+              <div className="text-lg font-bold text-gray-900">
+                {totalGuests} persona{totalGuests !== 1 ? 's' : ''}
+              </div>
+            </div>
+
+            {/* Selected Rooms */}
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+              <div className="flex items-center text-sm text-gray-600 mb-3">
+                <Home className="w-4 h-4 mr-2" />
+                Habitaciones
+              </div>
+              <div className="space-y-2">
+                {Object.keys(selectedRooms).length === 0 ? (
+                  <div className="text-gray-400 text-sm">Ninguna habitación</div>
+                ) : (
+                  Object.entries(selectedRooms).map(([roomId, quantity]) => {
+                    const room = rooms.find(r => r.id === roomId);
+                    return room ? (
+                      <div key={roomId} className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700">{room.name}</span>
+                        <span className="font-medium text-gray-900">x{quantity}</span>
+                      </div>
+                    ) : null;
+                  })
+                )}
+              </div>
+              {Object.keys(selectedRooms).length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Capacidad:</span>
+                    <span className="font-bold text-gray-900">{calculateSelectedGuests()} huéspedes</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pricing */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 md:p-4">
+              <div className="flex items-center text-sm text-gray-600 mb-3">
+                <span className="text-lg mr-1">💰</span>
+                Precio Total
+              </div>
+              <div className="space-y-1">
+                {checkInDate && checkOutDate && Object.keys(selectedRooms).length > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Noches:</span>
+                      <span>{calculateNights()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>{formatPrice(calculateTotalPrice())}</span>
+                    </div>
+                  </>
+                )}
+                <div className="border-t border-primary/30 pt-2 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-900">Total:</span>
+                    <span className="text-xl font-bold text-primary">
+                      {checkInDate && checkOutDate && Object.keys(selectedRooms).length > 0
+                        ? formatPrice(calculateTotalPrice())
+                        : '$0'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+              <div className="flex items-center text-sm text-gray-600 mb-2">
+                <span className="text-lg mr-1">📋</span>
+                Estado
+              </div>
+              <div className="text-sm">
+                {calculateSelectedGuests() >= totalGuests && Object.keys(selectedRooms).length > 0 ? (
+                  <span className="text-green-600 font-medium">✅ Listo para reservar</span>
+                ) : calculateSelectedGuests() < totalGuests && Object.keys(selectedRooms).length > 0 ? (
+                  <span className="text-orange-600 font-medium">⚠️ Faltan habitaciones</span>
+                ) : (
+                  <span className="text-gray-400">Selecciona habitaciones</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Navigation Breadcrumb */}
       <div className="bg-white/80 backdrop-blur-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-sm text-gray-600">
             <Link href="/" className="flex items-center hover:text-primary transition-colors">
               <Home className="w-4 h-4 mr-1" />
@@ -221,14 +439,14 @@ export default function HotelBookingPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-72 md:pb-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Hotel Booking
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-lg">
+            Paraiso Ayahuasca
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Experience authentic Amazon hospitality in our riverside lodge
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto drop-shadow-md">
+            Experimenta la auténtica hospitalidad amazónica en nuestro lodge ribereño
           </p>
         </div>
 
@@ -237,38 +455,40 @@ export default function HotelBookingPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Calendar className="w-5 h-5 mr-2" />
-              Select Your Dates
+              Selecciona Tus Fechas
             </CardTitle>
             <CardDescription>
-              Choose your check-in and check-out dates to see available rooms
+              Elige tus fechas de entrada y salida para ver habitaciones disponibles
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleDateSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="checkin">Check-in Date</Label>
+                <Label htmlFor="checkin">Fecha de Entrada</Label>
                 <Input
                   id="checkin"
                   type="date"
                   value={checkInDate}
                   onChange={(e) => setCheckInDate(e.target.value)}
+                  onClick={(e) => e.currentTarget.showPicker?.()}
                   min={new Date().toISOString().split('T')[0]}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="checkout">Check-out Date</Label>
+                <Label htmlFor="checkout">Fecha de Salida</Label>
                 <Input
                   id="checkout"
                   type="date"
                   value={checkOutDate}
                   onChange={(e) => setCheckOutDate(e.target.value)}
+                  onClick={(e) => e.currentTarget.showPicker?.()}
                   min={checkInDate || new Date().toISOString().split('T')[0]}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="guests">Number of Guests</Label>
+                <Label htmlFor="guests">Número de Huéspedes</Label>
                 <Input
                   id="guests"
                   type="number"
@@ -281,7 +501,7 @@ export default function HotelBookingPage() {
               </div>
               <div className="flex items-end">
                 <Button type="submit" className="w-full">
-                  Check Availability
+                  Verificar Disponibilidad
                 </Button>
               </div>
             </form>
@@ -291,7 +511,7 @@ export default function HotelBookingPage() {
         {/* Rooms Section */}
         {checkInDate && checkOutDate && (
           <div id="rooms-section">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Available Rooms</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 drop-shadow-lg">Habitaciones Disponibles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {rooms.map((room) => (
                 <Card key={room.id} className="overflow-hidden">
@@ -313,15 +533,15 @@ export default function HotelBookingPage() {
                       <span className="text-2xl font-bold text-primary">
                         {formatPrice(room.price)}
                       </span>
-                      <span className="text-sm text-gray-600">per night</span>
+                      <span className="text-sm text-gray-600">por noche</span>
                     </div>
                     <div className="flex items-center text-sm text-gray-600 mb-4">
                       <Users className="w-4 h-4 mr-1" />
-                      Up to {room.capacity} guests
+                      Hasta {room.capacity} huéspedes
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Quantity:</Label>
+                      <Label className="text-sm font-medium">Cantidad:</Label>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -352,27 +572,27 @@ export default function HotelBookingPage() {
             {Object.keys(selectedRooms).length > 0 && (
               <Card className="mb-8">
                 <CardHeader>
-                  <CardTitle>Selection Summary</CardTitle>
+                  <CardTitle>Resumen de Selección</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="text-sm text-gray-600">Selected Guests</p>
+                      <p className="text-sm text-gray-600">Huéspedes Seleccionados</p>
                       <p className="text-2xl font-bold">{calculateSelectedGuests()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Nights</p>
+                      <p className="text-sm text-gray-600">Noches</p>
                       <p className="text-2xl font-bold">{calculateNights()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Total Price</p>
+                      <p className="text-sm text-gray-600">Precio Total</p>
                       <p className="text-2xl font-bold text-primary">{formatPrice(calculateTotalPrice())}</p>
                     </div>
                   </div>
 
                   {calculateSelectedGuests() < totalGuests && (
                     <p className="text-red-600 text-sm">
-                      ⚠️ You need rooms for {totalGuests} guests but only have capacity for {calculateSelectedGuests()}
+                      ⚠️ Necesitas habitaciones para {totalGuests} huéspedes pero solo tienes capacidad para {calculateSelectedGuests()}
                     </p>
                   )}
                 </CardContent>
@@ -385,55 +605,106 @@ export default function HotelBookingPage() {
         {showBookingForm && (
           <Card>
             <CardHeader>
-              <CardTitle>Complete Your Booking</CardTitle>
+              <CardTitle>Completa Tu Reserva</CardTitle>
               <CardDescription>
-                Please provide your details to complete the reservation
+                Por favor proporciona tus datos para completar la reservación
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleBookingSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="guest-name">Full Name *</Label>
+                    <Label htmlFor="guest-name">Nombre Completo *</Label>
                     <Input
                       id="guest-name"
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Enter your full name"
+                      placeholder="Ingresa tu nombre completo"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="guest-email">Email Address *</Label>
+                    <Label htmlFor="guest-email">Dirección de Correo *</Label>
                     <Input
                       id="guest-email"
                       type="email"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
-                      placeholder="Enter your email"
+                      placeholder="Ingresa tu correo electrónico"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="special-requests">Special Requests</Label>
+                  <Label htmlFor="special-requests">Solicitudes Especiales</Label>
                   <Textarea
                     id="special-requests"
                     value={specialRequests}
                     onChange={(e) => setSpecialRequests(e.target.value)}
-                    placeholder="Any special requirements or notes..."
+                    placeholder="Cualquier requerimiento especial o notas..."
                     rows={3}
                   />
                 </div>
 
+                {/* Payment Method Selection */}
+                {isCashPaymentAvailable() && (
+                  <div>
+                    <Label className="text-base font-medium">Método de Pago</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                        }`}
+                        onClick={() => setPaymentMethod('card')}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="radio"
+                            id="card-payment"
+                            name="payment-method"
+                            checked={paymentMethod === 'card'}
+                            onChange={() => setPaymentMethod('card')}
+                            className="mr-2"
+                          />
+                          <Label htmlFor="card-payment" className="cursor-pointer">
+                            Tarjeta de Crédito/Débito
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">Paga de forma segura en línea</p>
+                      </div>
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                        }`}
+                        onClick={() => setPaymentMethod('cash')}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="radio"
+                            id="cash-payment"
+                            name="payment-method"
+                            checked={paymentMethod === 'cash'}
+                            onChange={() => setPaymentMethod('cash')}
+                            className="mr-2"
+                          />
+                          <Label htmlFor="cash-payment" className="cursor-pointer">
+                            Efectivo en Recepción
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">Paga cuando llegues</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-semibold mb-4">
-                    <span>Total Amount:</span>
+                    <span>Monto Total:</span>
                     <span className="text-primary">{formatPrice(calculateTotalPrice())}</span>
                   </div>
                   <Button type="submit" size="lg" className="w-full">
-                    Proceed to Payment
+                    {paymentMethod === 'cash' ? 'Confirmar Reserva' : 'Proceder al Pago'}
                   </Button>
                 </div>
               </form>

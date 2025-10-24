@@ -25,7 +25,7 @@ const languages = [
 export default function Navigation({ transparent = false, onMenuClick }: NavigationProps) {
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [currentLang, setCurrentLang] = useState('en');
+  const [currentLang, setCurrentLang] = useState('es');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,7 +62,7 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
           <div className="flex items-center gap-2">
             <Leaf className={`w-8 h-8 ${textClass}`} />
             <span className={`font-serif text-2xl font-bold ${textClass}`}>
-              Amazonas
+              Paraíso Ayahuasca
             </span>
           </div>
 
@@ -115,6 +115,9 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
                     onClick={() => {
                       setCurrentLang(lang.code);
                       console.log('Language changed to:', lang.code);
+                      // TODO: Implement actual language switching logic
+                      // This would typically update the app's language context/state
+                      // and reload content in the selected language
                     }}
                     className={currentLang === lang.code ? 'bg-accent' : ''}
                   >

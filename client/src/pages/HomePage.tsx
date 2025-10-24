@@ -57,11 +57,11 @@ export default function HomePage() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           {/* Hero Content */}
           <div className="text-center mb-12">
-            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-              Amazonas Tours
+            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl text-shadow-lg">
+              Paraíso Ayahuasca
             </h1>
-            <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto drop-shadow-md mb-8">
-              Immerse yourself in the world's most biodiverse rainforest
+            <p className="text-xl sm:text-2xl text-white max-w-3xl mx-auto drop-shadow-2xl mb-8 font-semibold">
+              Hotels & Tours en Leticia y Puerto Nariño
             </p>
 
             {/* Quick Booking Section - Integrated into Hero */}
@@ -73,13 +73,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Users className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2">Hotel Booking</h3>
-                      <p className="mb-4 opacity-90 text-sm">
-                        Reserve your riverside accommodation
+                      <h3 className="text-xl font-bold mb-2 text-white">Reserva de Hotel</h3>
+                      <p className="mb-4 text-white/90 text-sm font-medium">
+                        Alojamientos unicos del Amazonas
                       </p>
                       <Link href="/hotel-booking">
-                        <Button size="sm" variant="secondary" className="w-full">
-                          Book Hotel
+                        <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
+                          Reservar Hotel
                         </Button>
                       </Link>
                     </CardContent>
@@ -91,13 +91,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2">River Boat Tickets</h3>
-                      <p className="mb-4 opacity-90 text-sm">
-                        Book transportation between destinations
+                      <h3 className="text-xl font-bold mb-2 text-white">Tiquetes de Barco</h3>
+                      <p className="mb-4 text-white/90 text-sm font-medium">
+                        Reserva transporte fluvial seguro y confiable
                       </p>
                       <Link href="/boat-tickets">
-                        <Button size="sm" variant="secondary" className="w-full">
-                          Book Tickets
+                        <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
+                          Reservar Tiquetes
                         </Button>
                       </Link>
                     </CardContent>
@@ -110,7 +110,7 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto backdrop-blur-md bg-white/10 rounded-3xl p-6 sm:p-8 border border-white/20 shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-white mb-2">Where do you want to start your Amazon experience?</label>
+                <label className="block text-sm font-semibold text-white mb-2 font-medium">¿Dónde quieres comenzar tu experiencia amazónica?</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70 z-10" />
                   <select
@@ -118,10 +118,10 @@ export default function HomePage() {
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-white/90 border border-white/30 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
                   >
-                    <option value="">Select starting point</option>
-                    <option value="leticia">Leticia - Gateway to the Amazon</option>
-                    <option value="puerto-narino">Puerto Nariño - Indigenous Culture</option>
-                    <option value="mocagua">Mocagua - Wildlife Sanctuary</option>
+                    <option value="">Seleccionar punto de partida</option>
+                    <option value="leticia">Leticia - Puerta del Amazonas</option>
+                    <option value="puerto-narino">Puerto Nariño - Cultura Indígena</option>
+                    <option value="mocagua">Mocagua - Santuario de Vida Silvestre</option>
                   </select>
                 </div>
               </div>
@@ -129,11 +129,11 @@ export default function HomePage() {
               <div className="md:col-span-1 flex items-end">
                 <Button
                   onClick={handleSearch}
-                  className="w-full gap-2 bg-white text-primary hover:bg-white/90"
+                  className="w-full gap-2 bg-primary text-white hover:bg-primary/90 font-semibold shadow-lg border-2 border-white/30"
                   size="lg"
                 >
                   <Search className="w-5 h-5" />
-                  Explore Tours
+                  Explorar Tours
                 </Button>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function HomePage() {
             <div className="mt-6 flex items-center gap-4 text-white/90 text-sm">
               <div className="flex items-center gap-2 backdrop-blur-sm bg-white/10 px-4 py-2 rounded-full">
                 <span className="text-lg">⭐</span>
-                <span className="font-medium">4.9 • Trusted by 50,000+ explorers</span>
+                <span className="font-medium">4.9 • Confiado por más de 1,000 Viajeros</span>
               </div>
             </div>
           </div>
@@ -151,9 +151,9 @@ export default function HomePage() {
       <section className="bg-primary/5 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl font-bold mb-4">Our Amazing Destinations</h2>
+            <h2 className="font-serif text-4xl font-bold mb-4">Nuestros Destinos en Amazonas</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Three unique locations in the heart of the Amazon
+              Alojamientos y tours en Leticia y Puerto Nariño, Colombia
             </p>
           </div>
 
@@ -211,9 +211,9 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl font-bold mb-4">Featured Tours</h2>
+            <h2 className="font-serif text-4xl font-bold mb-4">Tours Destacados</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Handpicked adventures across all three destinations
+              Alojamientos y tours en Leticia y Puerto Nariño, Amazonas Colombia
             </p>
           </div>
 
@@ -252,7 +252,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl font-bold mb-4">Why Choose Amazonas Tours</h2>
+            <h2 className="font-serif text-4xl font-bold mb-4">¿Por Qué Elegir Paraíso Ayahuasca?</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -261,9 +261,9 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🌿</span>
                 </div>
-                <h3 className="font-serif text-xl font-semibold mb-3">Eco-Friendly</h3>
+                <h3 className="font-serif text-xl font-semibold mb-3">Ecológico</h3>
                 <p className="text-muted-foreground">
-                  We prioritize sustainable tourism and support local conservation efforts
+                  Priorizamos el turismo sostenible y apoyamos los esfuerzos de conservación local
                 </p>
               </CardContent>
             </Card>
@@ -273,9 +273,9 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">👨‍🏫</span>
                 </div>
-                <h3 className="font-serif text-xl font-semibold mb-3">Expert Guides</h3>
+                <h3 className="font-serif text-xl font-semibold mb-3">Guías Expertos</h3>
                 <p className="text-muted-foreground">
-                  Learn from certified naturalists with decades of rainforest experience
+                  Aprende de naturalistas certificados con décadas de experiencia en la selva
                 </p>
               </CardContent>
             </Card>
@@ -285,15 +285,59 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🏕️</span>
                 </div>
-                <h3 className="font-serif text-xl font-semibold mb-3">Authentic Lodges</h3>
+                <h3 className="font-serif text-xl font-semibold mb-3">Cabañas Auténticas</h3>
                 <p className="text-muted-foreground">
-                  Stay in comfortable eco-lodges that blend seamlessly with nature
+                  Hospedaje en cómodas eco-cabañas que se integran perfectamente con la naturaleza
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <h3 className="font-serif text-2xl font-bold mb-4">Paraíso Ayahuasca</h3>
+              <p className="text-gray-300 mb-4">
+                Hotels & Tours en Leticia y Puerto Nariño, Amazonas Colombia
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <span>🏞️</span>
+                <span>Puerto Nariño, Amazonas Colombia</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-400">
+                <span>RNT 244213</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Servicios</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="/hotel-booking" className="hover:text-white transition-colors">Reservas de Hotel</a></li>
+                <li><a href="/tours" className="hover:text-white transition-colors">Tours Guiados</a></li>
+                <li><a href="/boat-tickets" className="hover:text-white transition-colors">Tiquetes de Barco</a></li>
+                <li><a href="/accommodations" className="hover:text-white transition-colors">Alojamientos</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Destinos</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li>Leticia - Puerta del Amazonas</li>
+                <li>Puerto Nariño - Cultura Indígena</li>
+                <li>Mocagua - Vida Silvestre</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 Paraíso Ayahuasca Hotels & Tours. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

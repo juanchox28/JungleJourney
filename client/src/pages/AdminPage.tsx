@@ -26,6 +26,46 @@ export default function AdminPage() {
   const [deletingTourId, setDeletingTourId] = useState<string | null>(null);
   const [deletingAccommodationId, setDeletingAccommodationId] = useState<string | null>(null);
 
+  // Update accommodation mutation (missing from current code)
+  const updateAccommodationMutation = useMutation({
+    mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
+      const response = await fetch(`/api/admin/accommodations/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer admin123`,
+        },
+        body: JSON.stringify(accommodationData),
+      });
+      if (!response.ok) throw new Error("Failed to update accommodation");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+      setIsAccommodationDialogOpen(false);
+      setEditingAccommodation(null);
+      toast({ title: "Success", description: "Accommodation updated successfully" });
+    },
+  });
+
+  const deleteAccommodationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/admin/accommodations/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer admin123`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to delete accommodation");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+      setDeletingAccommodationId(null);
+      toast({ title: "Success", description: "Accommodation deleted successfully" });
+    },
+  });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -247,10 +287,12 @@ export default function AdminPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="tours">Tours ({tours.length})</TabsTrigger>
             <TabsTrigger value="accommodations">Accommodations ({accommodations.length})</TabsTrigger>
             <TabsTrigger value="bookings">Bookings ({bookings.length})</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           {/* Tours Tab */}
@@ -360,8 +402,14 @@ export default function AdminPage() {
                   </DialogHeader>
                   <AccommodationForm
                     accommodation={editingAccommodation}
-                    onSubmit={(data) => createAccommodationMutation.mutate(data)}
-                    isLoading={createAccommodationMutation.isPending}
+                    onSubmit={(data) => {
+                      if (editingAccommodation) {
+                        updateAccommodationMutation.mutate({ id: editingAccommodation.id, accommodationData: data });
+                      } else {
+                        createAccommodationMutation.mutate(data);
+                      }
+                    }}
+                    isLoading={editingAccommodation ? updateAccommodationMutation.isPending : createAccommodationMutation.isPending}
                   />
                 </DialogContent>
               </Dialog>
@@ -405,13 +453,16 @@ export default function AdminPage() {
                             <Button variant="outline" size="sm">
                               <Eye className="w-4 h-4" />
                             </Button>
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               className="text-red-600"
                               onClick={() => {
                                 if (confirm(`Are you sure you want to delete "${accommodation.name}"?`)) {
-                                  // deleteAccommodationMutation.mutate(accommodation.id);
+                                  deleteAccommodationMutation.mutate(accommodation.id);
                                 }
                               }}
                             >
@@ -513,6 +564,156 @@ export default function AdminPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Content Management Tab */}
+          <TabsContent value="content" className="space-y-6">
+            <h2 className="text-2xl font-bold">Content Management</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Site Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Site Settings</CardTitle>
+                  <CardDescription>Manage global site configuration</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="site-title">Site Title</Label>
+                    <Input id="site-title" defaultValue="Paraíso Ayahuasca Hotels & Tours" />
+                  </div>
+                  <div>
+                    <Label htmlFor="site-description">Site Description</Label>
+                    <Textarea id="site-description" rows={3} defaultValue="Paraíso Ayahuasca Hotels & Tours - Alojamientos y tours en Leticia y Puerto Nariño, Amazonas Colombia. Experiencias auténticas con ceremonias tradicionales." />
+                  </div>
+                  <div>
+                    <Label htmlFor="business-id">Business ID (RNT)</Label>
+                    <Input id="business-id" defaultValue="244213" />
+                  </div>
+                  <Button>Save Settings</Button>
+                </CardContent>
+              </Card>
+
+              {/* Hero Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hero Images</CardTitle>
+                  <CardDescription>Manage homepage hero images</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Current Hero Image</Label>
+                    <div className="mt-2">
+                      <img
+                        src="/assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png"
+                        alt="Current hero"
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="hero-upload">Upload New Hero Image</Label>
+                    <Input id="hero-upload" type="file" accept="image/*" />
+                  </div>
+                  <Button>Update Hero Image</Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* SEO Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO Settings</CardTitle>
+                <CardDescription>Manage search engine optimization</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="meta-title">Meta Title</Label>
+                    <Input id="meta-title" defaultValue="Paraíso Ayahuasca Hotels & Tours - Leticia y Puerto Nariño, Amazonas Colombia" />
+                  </div>
+                  <div>
+                    <Label htmlFor="meta-description">Meta Description</Label>
+                    <Input id="meta-description" defaultValue="Paraíso Ayahuasca Hotels & Tours - Alojamientos y tours en Leticia y Puerto Nariño, Amazonas Colombia. Experiencias auténticas con ceremonias tradicionales. RNT 244213" />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+                  <Input id="keywords" defaultValue="Paraíso Ayahuasca, hotels, tours, Leticia, Puerto Nariño, Amazonas, Colombia, ceremonias ayahuasca, turismo indigena, alojamiento amazonas, RNT 244213" />
+                </div>
+                <Button>Save SEO Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <h2 className="text-2xl font-bold">Analytics & Reports</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Booking Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Bookings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-primary">{bookings.length}</div>
+                  <p className="text-sm text-muted-foreground">All time</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Confirmed Bookings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">
+                    {bookings.filter(b => b.status === 'confirmed').length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">This month</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600">
+                    {formatPrice(bookings.reduce((sum, b) => sum + parseInt(b.totalPrice || '0'), 0).toString())}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Total revenue</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest bookings and updates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {bookings.slice(0, 5).map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{booking.guestName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {booking.tourId ? 'Tour booking' : 'Accommodation booking'} • {booking.status}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatPrice(booking.totalPrice || '0')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
