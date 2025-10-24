@@ -80,6 +80,7 @@ export const bookings = pgTable("bookings", {
   checkoutUrl: text("checkout_url"), // Wompi checkout URL
   paymentStatus: text("payment_status"), // APPROVED, DECLINED, PENDING, etc.
   paymentData: text("payment_data"), // JSON string of payment details
+  paymentMethod: text("payment_method"), // card, cash
 });
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({

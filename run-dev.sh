@@ -40,15 +40,25 @@ echo "✅ Node.js $NODE_VERSION ready"
 echo "🧹 Cleaning up any existing processes on port 5000..."
 pkill -f "tsx server/index.ts" 2>/dev/null || true
 pkill -f "node.*server/index.ts" 2>/dev/null || true
+pkill -f "npm.*dev" 2>/dev/null || true
+
+# Force kill any remaining processes on port 5000
+if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "🔨 Force killing processes on port 5000..."
+    lsof -ti:5000 | xargs kill -9 2>/dev/null || true
+fi
 
 # Wait a moment for processes to terminate
-sleep 2
+sleep 3
 
 # Check if port 5000 is still in use
 if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "❌ Port 5000 is still in use. Please close other applications using this port."
+    echo "   You can also try: sudo lsof -ti:5000 | xargs kill -9"
     exit 1
 fi
+
+echo "✅ Port 5000 is now free"
 
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
