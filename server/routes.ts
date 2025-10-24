@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           wompi_response: wompiData
         });
       } else {
-        console.error("❌ Error en respuesta de Wompi:", wompiData);
+        console.error("❌ Error en respuesta de Wompi:", JSON.stringify(wompiData, null, 2));
 
         const updatedBooking = {
           ...booking,
@@ -384,7 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           wompi_response: wompiData
         });
       } else {
-        console.error("❌ Error en respuesta de Wompi:", wompiData);
+        console.error("❌ Error en respuesta de Wompi:", JSON.stringify(wompiData, null, 2));
 
         const updatedBooking = {
           ...booking,

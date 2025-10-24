@@ -298,7 +298,7 @@ export default function HotelBookingPage() {
 
       {/* Reservation Details - Mobile: Bottom, Desktop: Right Sidebar */}
       <div className="fixed bottom-0 left-0 right-0 md:right-0 md:top-0 md:h-full md:w-80 bg-white/95 backdrop-blur-sm border-t md:border-t-0 md:border-l border-gray-200 shadow-xl z-50 md:overflow-y-auto">
-        <div className="p-4 md:p-6 max-h-64 md:max-h-none overflow-y-auto">
+        <div className="p-4 md:p-6 max-h-56 md:max-h-none overflow-y-auto">
           <h3 className="text-lg font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-primary" />
             Detalles de Reserva
@@ -439,7 +439,7 @@ export default function HotelBookingPage() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-80 md:pb-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-72 md:pb-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-lg">
