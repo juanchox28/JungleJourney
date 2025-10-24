@@ -296,17 +296,17 @@ export default function HotelBookingPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-blue-400/10 rounded-full blur-2xl"></div>
       </div>
 
-      {/* Fixed Reservation Details Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-sm border-l border-gray-200 shadow-xl z-50 overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+      {/* Reservation Details - Mobile: Bottom, Desktop: Right Sidebar */}
+      <div className="fixed bottom-0 left-0 right-0 md:right-0 md:top-0 md:h-full md:w-80 bg-white/95 backdrop-blur-sm border-t md:border-t-0 md:border-l border-gray-200 shadow-xl z-50 md:overflow-y-auto">
+        <div className="p-4 md:p-6 max-h-64 md:max-h-none overflow-y-auto">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-primary" />
             Detalles de Reserva
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {/* Dates */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
               <div className="flex items-center text-sm text-gray-600 mb-2">
                 <Calendar className="w-4 h-4 mr-2" />
                 Fechas
@@ -331,7 +331,7 @@ export default function HotelBookingPage() {
             </div>
 
             {/* Guests */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
               <div className="flex items-center text-sm text-gray-600 mb-2">
                 <Users className="w-4 h-4 mr-2" />
                 Huéspedes
@@ -342,14 +342,14 @@ export default function HotelBookingPage() {
             </div>
 
             {/* Selected Rooms */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
               <div className="flex items-center text-sm text-gray-600 mb-3">
                 <Home className="w-4 h-4 mr-2" />
-                Habitaciones Seleccionadas
+                Habitaciones
               </div>
               <div className="space-y-2">
                 {Object.keys(selectedRooms).length === 0 ? (
-                  <div className="text-gray-400 text-sm">Ninguna habitación seleccionada</div>
+                  <div className="text-gray-400 text-sm">Ninguna habitación</div>
                 ) : (
                   Object.entries(selectedRooms).map(([roomId, quantity]) => {
                     const room = rooms.find(r => r.id === roomId);
@@ -365,7 +365,7 @@ export default function HotelBookingPage() {
               {Object.keys(selectedRooms).length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Capacidad Total:</span>
+                    <span className="text-gray-600">Capacidad:</span>
                     <span className="font-bold text-gray-900">{calculateSelectedGuests()} huéspedes</span>
                   </div>
                 </div>
@@ -373,7 +373,7 @@ export default function HotelBookingPage() {
             </div>
 
             {/* Pricing */}
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 md:p-4">
               <div className="flex items-center text-sm text-gray-600 mb-3">
                 <span className="text-lg mr-1">💰</span>
                 Precio Total
@@ -406,7 +406,7 @@ export default function HotelBookingPage() {
             </div>
 
             {/* Status */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
               <div className="flex items-center text-sm text-gray-600 mb-2">
                 <span className="text-lg mr-1">📋</span>
                 Estado
@@ -439,7 +439,7 @@ export default function HotelBookingPage() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pr-96">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-80 md:pb-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-lg">
