@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { config } from "dotenv";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite";
 
@@ -77,6 +78,10 @@ app.use((req, res, next) => {
     if (process.env.SERVE_STATIC !== 'false') {
       serveStatic(app);
     }
+    // fall through to index.html if the file doesn't exist
+    app.use("*", (_req, res) => {
+      res.sendFile(path.resolve(path.resolve(import.meta.dirname, "public"), "index.html"));
+    });
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
