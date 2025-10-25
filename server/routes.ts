@@ -278,6 +278,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { guestName, guestEmail, guestCount, checkInDate, checkOutDate, accommodationId, totalPrice, paymentMethod, status } = req.body;
 
+      // Validate required fields
+      if (!guestName || !guestEmail || !guestCount || !checkInDate || !checkOutDate || !accommodationId || !totalPrice) {
+        return res.status(400).json({
+          ok: false,
+          error: "Missing required booking information"
+        });
+      }
+
       const reference = `BK-${Date.now()}`;
 
       // Handle cash payment bookings
@@ -311,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (!emailResult.success) {
           console.error(`❌ Failed to send confirmation email for booking ${reference}: ${emailResult.error}`);
-          booking.status = "email_failed";
+          await storage.updateBooking(booking.id, { status: "email_failed" });
           return res.status(500).json({
             ok: false,
             error: "Failed to send confirmation email",

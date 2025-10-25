@@ -17,6 +17,7 @@ export interface IStorage {
 
   getBookings(): Promise<Booking[]>;
   createBooking(booking: InsertBooking): Promise<Booking>;
+  updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined>;
 }
 
 function parseLocation(locationStr: string): string {
@@ -265,6 +266,16 @@ export class MemStorage implements IStorage {
     };
     this.bookings.set(id, booking);
     return booking;
+  }
+
+  async updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined> {
+    const booking = this.bookings.get(id);
+    if (!booking) {
+      return undefined;
+    }
+    const updatedBooking = { ...booking, ...updates };
+    this.bookings.set(id, updatedBooking);
+    return updatedBooking;
   }
 }
 
