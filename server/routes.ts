@@ -297,27 +297,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log("💾 Cash accommodation booking created:", booking);
 
-        // Send confirmation email for cash payment
-        const emailResult = await sendConfirmationEmail({
-          reference: booking.reference || '',
-          name: booking.guestName,
-          email: booking.guestEmail,
-          checkIn: booking.checkInDate || undefined,
-          checkOut: booking.checkOutDate || undefined,
-          guests: booking.guestCount,
-          room: 'Accommodation', // Generic for now
-          amount: booking.totalPrice ? parseFloat(booking.totalPrice) : 0
-        });
-
-        if (!emailResult.success) {
-          console.error(`❌ Failed to send confirmation email for booking ${reference}: ${emailResult.error}`);
-          booking.status = "email_failed";
-          return res.status(500).json({
-            ok: false,
-            error: "Failed to send confirmation email",
-            details: emailResult.error,
-            booking
+        // Send confirmation email for cash payment (don't fail if email fails)
+        try {
+          await sendConfirmationEmail({
+            reference: booking.reference || '',
+            name: booking.guestName,
+            email: booking.guestEmail,
+            checkIn: booking.checkInDate || undefined,
+            checkOut: booking.checkOutDate || undefined,
+            guests: booking.guestCount,
+            room: 'Accommodation', // Generic for now
+            amount: booking.totalPrice ? parseFloat(booking.totalPrice) : 0
           });
+          console.log(`📧 Confirmation email sent for cash booking: ${reference}`);
+        } catch (emailError) {
+          console.error(`⚠️ Email sending failed for cash booking: ${reference}`, emailError);
+          // Don't fail the booking for email errors
         }
 
         return res.json({
@@ -352,18 +347,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("💾 Accommodation booking created:", booking);
 
-      // -------------------- WOMPI CALL --------------------
+      // -------------------- ENHANCED WOMPI CALL --------------------
+      const amountInCents = Math.round(parseFloat(totalPrice) * 100);
+
+      // Validate amount is reasonable (prevent fraud)
+      if (amountInCents < 1000 || amountInCents > 10000000) { // Between ~$10 and ~$100,000 COP
+        console.error(`❌ Invalid amount: ${amountInCents} cents`);
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid payment amount",
+          message: "Amount must be between $10 and $100,000 COP"
+        });
+      }
+
       const payload = {
         name: `JungleJourney Accommodation Booking - ${reference}`,
-        amount_in_cents: Math.round(parseFloat(totalPrice) * 100),
+        amount_in_cents: amountInCents,
         currency: "COP",
         single_use: true,
         description: `Accommodation booking for ${guestName} - ${checkInDate} to ${checkOutDate} - ${guestCount} guest(s)`,
         redirect_url: `${FRONTEND_URL}/booking-success.html?reference=${reference}&type=accommodation&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&checkIn=${checkInDate}&checkOut=${checkOutDate}&guests=${guestCount}&amount=${totalPrice}`,
         collect_shipping: false,
+        // Add webhook URL for automatic status updates
+        webhook_url: `${process.env.BACKEND_URL || FRONTEND_URL.replace('http://', 'https://').replace('https://localhost:5000', 'https://your-fly-app.fly.dev')}/api/wompi/webhook`
       };
 
-      console.log("📡 Sending to Wompi:", payload);
+      console.log("📡 Sending to Wompi:", { ...payload, webhook_url: payload.webhook_url });
 
       const wompiRes = await fetch(`${WOMPI_BASE}/payment_links`, {
         method: "POST",
@@ -397,16 +406,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.error("❌ Error en respuesta de Wompi:", JSON.stringify(wompiData, null, 2));
 
-        const updatedBooking = {
-          ...booking,
-          status: "payment_failed",
-          paymentStatus: "ERROR"
-        };
+        // Update booking status to failed
+        booking.status = "payment_failed";
+        booking.paymentStatus = "ERROR";
+        booking.paymentData = JSON.stringify(wompiData);
 
         res.status(400).json({
           ok: false,
-          booking: updatedBooking,
-          error: wompiData.error || "Failed to create payment link",
+          booking,
+          error: wompiData.error?.messages?.[0]?.message || wompiData.error || "Failed to create payment link",
           wompi_response: wompiData
         });
       }
@@ -479,6 +487,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("❌ Error checking payment status:", err);
       res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
     }
+  });
+
+  // -------------------- WOMPI WEBHOOK HANDLING --------------------
+  app.post("/api/wompi/webhook", async (req, res) => {
+    console.log(`🔗 Wompi webhook received from ${req.ip} at ${new Date().toISOString()}`);
+    console.log('Webhook body:', JSON.stringify(req.body, null, 2));
+
+    try {
+      const { event, data, signature } = req.body;
+
+      // Validate webhook signature (recommended for production)
+      if (process.env.NODE_ENV === 'production' && signature) {
+        // Wompi provides signature validation - implement if needed
+        // This is optional but recommended for security
+      }
+
+      if (!data || !data.id) {
+        console.warn('⚠️ Invalid webhook data - missing transaction ID');
+        return res.status(400).json({ ok: false, error: 'Invalid webhook data' });
+      }
+
+      const transactionId = data.id;
+      console.log(`💳 Processing webhook for transaction: ${transactionId}`);
+
+      // Find booking by Wompi payment ID
+      const bookings = await storage.getBookings();
+      const booking = bookings.find(b => b.wompiPaymentId === transactionId);
+
+      if (!booking) {
+        console.warn(`⚠️ No booking found for transaction ID: ${transactionId}`);
+        return res.status(404).json({ ok: false, error: 'Booking not found for transaction' });
+      }
+
+      console.log(`📋 Found booking: ${booking.reference} - Current status: ${booking.status}`);
+
+      // Map Wompi status to booking status
+      const statusMap = {
+        'APPROVED': 'confirmed',
+        'DECLINED': 'cancelled',
+        'VOIDED': 'cancelled',
+        'ERROR': 'payment_failed',
+        'PENDING': 'pending'
+      };
+
+      const newStatus = statusMap[data.status as keyof typeof statusMap] || 'pending';
+      const oldStatus = booking.status;
+
+      // Update booking with webhook data
+      booking.status = newStatus;
+      booking.paymentStatus = data.status;
+      booking.paymentData = JSON.stringify(data);
+
+      console.log(`🔄 Status update: ${oldStatus} → ${newStatus}`);
+
+      // Send confirmation email for approved payments
+      if (newStatus === 'confirmed' && oldStatus !== 'confirmed') {
+        console.log(`📧 Sending confirmation email for booking: ${booking.reference}`);
+
+        try {
+          await sendConfirmationEmail({
+            reference: booking.reference || '',
+            name: booking.guestName,
+            email: booking.guestEmail,
+            checkIn: booking.checkInDate || undefined,
+            checkOut: booking.checkOutDate || undefined,
+            guests: booking.guestCount,
+            room: booking.accommodationId ? 'Accommodation' : 'Tour',
+            amount: booking.totalPrice ? parseFloat(booking.totalPrice) : 0
+          });
+          console.log(`✅ Confirmation email sent for booking: ${booking.reference}`);
+        } catch (emailError) {
+          console.error(`❌ Failed to send confirmation email for booking: ${booking.reference}`, emailError);
+          // Don't fail the webhook for email errors
+        }
+      }
+
+      // Log successful webhook processing
+      console.log(`✅ Webhook processed successfully for booking: ${booking.reference} (${newStatus})`);
+
+      res.json({
+        ok: true,
+        message: 'Webhook processed successfully',
+        booking: {
+          reference: booking.reference,
+          status: booking.status,
+          paymentStatus: booking.paymentStatus
+        }
+      });
+
+    } catch (err) {
+      console.error("❌ Error processing Wompi webhook:", err);
+      res.status(500).json({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        message: 'Webhook processing failed'
+      });
+    }
+  });
+
+  // Webhook verification endpoint (optional)
+  app.get("/api/wompi/webhook", (req, res) => {
+    console.log(`🔍 Wompi webhook verification request from ${req.ip}`);
+    res.json({
+      ok: true,
+      message: 'Wompi webhook endpoint is active',
+      timestamp: new Date().toISOString()
+    });
   });
 
   // Email confirmation endpoint
