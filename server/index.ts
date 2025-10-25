@@ -5,14 +5,22 @@ import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite";
 
-// Load environment variables from .env file
-config({ path: "./.env" });
+// Load environment variables based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+config({ path: path.join(process.cwd(), envFile) });
+
+console.log(`🌍 Loading environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📁 Using env file: ${envFile}`);
 
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:5173" // For local development
+  "http://localhost:5000", // For local development (backend serves frontend)
+  "http://localhost:5173"  // For Vite dev server if used separately
 ];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 if (process.env.CORS_ORIGIN) {
   allowedOrigins.push(process.env.CORS_ORIGIN);
 }

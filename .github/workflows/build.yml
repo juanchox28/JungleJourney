@@ -59,9 +59,9 @@ jobs:
         run: npm ci
 
       - name: 🏗️ Build frontend
-        run: npm run build:client
+        run: npm run build:client:prod
         env:
-          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          NODE_ENV: production
 
       - name: 📤 Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -79,6 +79,9 @@ jobs:
             **/.DS_Store
             **/README.md
             **/.gitignore
+
+      - name: ✅ Deployment Complete
+        run: echo "Frontend deployed to Hostinger successfully"
 
   # 💾 Backup artifact if FTP fails
   create-artifact:
@@ -100,9 +103,9 @@ jobs:
         run: npm ci
 
       - name: 🏗️ Build frontend
-        run: npm run build:client
+        run: npm run build:client:prod
         env:
-          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          NODE_ENV: production
 
       - name: 💾 Upload build artifact
         uses: actions/upload-artifact@v4
@@ -110,3 +113,22 @@ jobs:
           name: frontend-build-${{ github.run_number }}
           path: dist/public/
           retention-days: 7
+
+  # 🧪 Run basic health checks
+  health-check:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: success()
+
+    steps:
+      - name: 🔍 Check backend health
+        run: |
+          sleep 30  # Wait for deployment to stabilize
+          curl -f https://jungle-tours-backend.fly.dev/api/version || exit 1
+
+      - name: 🔍 Check frontend accessibility
+        run: |
+          curl -f -I https://ayahuascapuertonarino.com/ | head -n 1 | grep -q "200\|301\|302" || exit 1
+
+      - name: ✅ Health checks passed
+        run: echo "All health checks passed!"
