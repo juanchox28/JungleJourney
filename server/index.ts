@@ -88,7 +88,7 @@ app.use((req, res, next) => {
     }
     // fall through to index.html if the file doesn't exist
     app.use("*", (_req, res) => {
-      res.sendFile(path.resolve(path.resolve(import.meta.dirname, "public"), "index.html"));
+      res.sendFile(path.resolve(process.cwd(), "dist", "public", "index.html"));
     });
   }
 
