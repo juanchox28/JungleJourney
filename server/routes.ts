@@ -298,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("💾 Cash accommodation booking created:", booking);
 
         // Send confirmation email for cash payment
-        await sendConfirmationEmail({
+        const emailResult = await sendConfirmationEmail({
           reference: booking.reference || '',
           name: booking.guestName,
           email: booking.guestEmail,
@@ -308,6 +308,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           room: 'Accommodation', // Generic for now
           amount: booking.totalPrice ? parseFloat(booking.totalPrice) : 0
         });
+
+        if (!emailResult.success) {
+          console.error(`❌ Failed to send confirmation email for booking ${reference}: ${emailResult.error}`);
+          booking.status = "email_failed";
+          return res.status(500).json({
+            ok: false,
+            error: "Failed to send confirmation email",
+            details: emailResult.error,
+            booking
+          });
+        }
 
         return res.json({
           ok: true,
