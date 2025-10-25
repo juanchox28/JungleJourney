@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import HeroSection from "@/components/HeroSection";
@@ -31,6 +31,45 @@ export default function HomePage() {
       return response.json();
     },
   });
+
+  // Add page-specific schema markup
+  useEffect(() => {
+    // Add structured data for the homepage
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Paraíso Ayahuasca Hotels & Tours - Homepage",
+      "description": "Paraíso Ayahuasca Hotels & Tours - Alojamientos y tours en Leticia y Puerto Nariño, Amazonas Colombia. Experiencias auténticas con ceremonias tradicionales.",
+      "url": "https://paraisoayahuasca.com",
+      "mainEntity": {
+        "@type": "TouristDestination",
+        "name": "Amazonas Colombia",
+        "description": "Leticia y Puerto Nariño - Puertas del Amazonas colombiano",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "Amazonas",
+          "addressCountry": "Colombia"
+        },
+        "touristType": "Adventure Tourism, Cultural Tourism, Ecotourism"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [{
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://paraisoayahuasca.com"
+        }]
+      }
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
 
   const handleSearch = () => {
     if (selectedLocation) {

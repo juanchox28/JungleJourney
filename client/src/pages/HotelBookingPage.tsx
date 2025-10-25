@@ -28,6 +28,65 @@ export default function HotelBookingPage() {
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
 
+  // Add page-specific schema markup
+  useEffect(() => {
+    // Add structured data for hotel booking page
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Hotel Booking - Paraíso Ayahuasca",
+      "description": "Book accommodations at Paraíso Ayahuasca Hotels & Tours in Leticia and Puerto Nariño, Amazonas Colombia",
+      "url": "https://paraisoayahuasca.com/hotel-booking",
+      "mainEntity": {
+        "@type": "LodgingBusiness",
+        "name": "Paraíso Ayahuasca Lodge",
+        "description": "Riverside lodge offering authentic Amazonian hospitality with traditional ceremonies",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "Amazonas",
+          "addressCountry": "Colombia"
+        },
+        "priceRange": "$$",
+        "amenityFeature": [
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "Riverside Location",
+            "value": "true"
+          },
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "Traditional Ceremonies",
+            "value": "true"
+          }
+        ]
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://paraisoayahuasca.com"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Hotel Booking",
+            "item": "https://paraisoayahuasca.com/hotel-booking"
+          }
+        ]
+      }
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   // Sample rooms data (in a real app, this would come from an API)
   useEffect(() => {
     const sampleRooms: Room[] = [

@@ -60,10 +60,22 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <Leaf className={`w-8 h-8 ${textClass}`} />
-            <span className={`font-serif text-2xl font-bold ${textClass}`}>
-              Paraíso Ayahuasca
-            </span>
+            <Link href="/" className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Paraíso Ayahuasca Logo"
+                className="w-10 h-10 object-contain"
+                onError={(e) => {
+                  // Fallback to leaf icon if logo fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling!.classList.remove('hidden');
+                }}
+              />
+              <Leaf className={`w-8 h-8 ${textClass} hidden`} />
+              <span className={`font-serif text-2xl font-bold ${textClass}`}>
+                Paraíso Ayahuasca
+              </span>
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-8">
