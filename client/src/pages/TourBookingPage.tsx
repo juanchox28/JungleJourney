@@ -22,7 +22,7 @@ export default function TourBookingPage() {
   const { data: tours = [], isLoading } = useQuery({
     queryKey: ["tours"],
     queryFn: async () => {
-      const response = await fetch("/api/tours");
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/tours`);
       if (!response.ok) throw new Error("Failed to fetch tours");
       return response.json() as Promise<Tour[]>;
     },
@@ -45,7 +45,7 @@ export default function TourBookingPage() {
     const totalPrice = calculateTourPrice();
 
     try {
-      const response = await fetch('/api/create-tour-booking', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-tour-booking`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
