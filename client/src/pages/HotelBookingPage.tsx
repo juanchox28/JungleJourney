@@ -23,7 +23,7 @@ export default function HotelBookingPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<{[key: string]: number}>({});
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('cash');
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
@@ -186,18 +186,8 @@ export default function HotelBookingPage() {
   };
 
   const isCashPaymentAvailable = () => {
-    if (!checkInDate) return false;
-    const checkIn = new Date(checkInDate);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    // Reset time to compare dates only
-    checkIn.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    return checkIn.getTime() === today.getTime() || checkIn.getTime() === tomorrow.getTime();
+    // Cash payment is now available for all dates
+    return true;
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -652,31 +642,31 @@ export default function HotelBookingPage() {
                 </div>
 
                 {/* Payment Method Selection */}
-                {isCashPaymentAvailable() && (
-                  <div>
-                    <Label className="text-base font-medium">Método de Pago</Label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div
-                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                          paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                        }`}
-                        onClick={() => setPaymentMethod('card')}
-                      >
-                        <div className="flex items-center">
-                          <input
-                            type="radio"
-                            id="card-payment"
-                            name="payment-method"
-                            checked={paymentMethod === 'card'}
-                            onChange={() => setPaymentMethod('card')}
-                            className="mr-2"
-                          />
-                          <Label htmlFor="card-payment" className="cursor-pointer">
-                            Tarjeta de Crédito/Débito
-                          </Label>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">Paga de forma segura en línea</p>
+                <div>
+                  <Label className="text-base font-medium">Método de Pago</Label>
+                  <div className={`grid gap-4 mt-2 ${isCashPaymentAvailable() ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    <div
+                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                        paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                      }`}
+                      onClick={() => setPaymentMethod('card')}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="card-payment"
+                          name="payment-method"
+                          checked={paymentMethod === 'card'}
+                          onChange={() => setPaymentMethod('card')}
+                          className="mr-2"
+                        />
+                        <Label htmlFor="card-payment" className="cursor-pointer">
+                          Tarjeta de Crédito/Débito
+                        </Label>
                       </div>
+                      <p className="text-sm text-gray-600 mt-1">Paga de forma segura en línea</p>
+                    </div>
+                    {isCashPaymentAvailable() && (
                       <div
                         className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                           paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-200'
@@ -698,9 +688,9 @@ export default function HotelBookingPage() {
                         </div>
                         <p className="text-sm text-gray-600 mt-1">Paga cuando llegues</p>
                       </div>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-semibold mb-4">
