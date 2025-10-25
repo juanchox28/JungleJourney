@@ -162,6 +162,10 @@ export default function HotelBookingPage() {
     }, 0);
     if (selectedGuests >= totalGuests && Object.keys(newSelectedRooms).length > 0) {
       setShowBookingForm(true);
+      // Auto-scroll to booking form after a short delay to allow state update
+      setTimeout(() => {
+        document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } else {
       setShowBookingForm(false);
     }
@@ -603,7 +607,7 @@ export default function HotelBookingPage() {
 
         {/* Booking Form */}
         {showBookingForm && (
-          <Card>
+          <Card id="booking-form">
             <CardHeader>
               <CardTitle>Completa Tu Reserva</CardTitle>
               <CardDescription>

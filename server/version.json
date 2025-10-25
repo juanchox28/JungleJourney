@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "commit": "6dbbbb36bc93ecbb59b2b3c3babbfdfaf6f45267",
-  "branch": "Ayahuasca",
-  "buildTime": "2025-10-24T19:31:42.030Z",
+  "commit": "8900f324ae3f9078fd8aec6a1799f8066aa6378f",
+  "branch": "fix-booking-payment-and-ui",
+  "buildTime": "2025-10-25T00:50:06.641Z",
   "environment": "production"
 }
