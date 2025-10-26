@@ -10,10 +10,14 @@ export interface IStorage {
   getTours(filters?: { location?: string; category?: string }): Promise<Tour[]>;
   getTour(id: string): Promise<Tour | undefined>;
   createTour(tour: InsertTour): Promise<Tour>;
+  updateTour(id: string, tour: Partial<InsertTour>): Promise<Tour | undefined>;
+  deleteTour(id: string): Promise<boolean>;
 
   getAccommodations(filters?: { location?: string; type?: string }): Promise<Accommodation[]>;
   getAccommodation(id: string): Promise<Accommodation | undefined>;
   createAccommodation(accommodation: InsertAccommodation): Promise<Accommodation>;
+  updateAccommodation(id: string, accommodation: Partial<InsertAccommodation>): Promise<Accommodation | undefined>;
+  deleteAccommodation(id: string): Promise<boolean>;
 
   getBookings(): Promise<Booking[]>;
   createBooking(booking: InsertBooking): Promise<Booking>;
@@ -201,6 +205,19 @@ export class MemStorage implements IStorage {
     return tour;
   }
 
+  async updateTour(id: string, insertTour: Partial<InsertTour>): Promise<Tour | undefined> {
+    const tour = this.tours.get(id);
+    if (!tour) return undefined;
+
+    const updatedTour = { ...tour, ...insertTour };
+    this.tours.set(id, updatedTour);
+    return updatedTour;
+  }
+
+  async deleteTour(id: string): Promise<boolean> {
+    return this.tours.delete(id);
+  }
+
   async getAccommodations(filters?: { location?: string; type?: string }): Promise<Accommodation[]> {
     let accommodations = Array.from(this.accommodations.values());
 
@@ -235,6 +252,19 @@ export class MemStorage implements IStorage {
     };
     this.accommodations.set(id, accommodation);
     return accommodation;
+  }
+
+  async updateAccommodation(id: string, insertAccommodation: Partial<InsertAccommodation>): Promise<Accommodation | undefined> {
+    const accommodation = this.accommodations.get(id);
+    if (!accommodation) return undefined;
+
+    const updatedAccommodation = { ...accommodation, ...insertAccommodation };
+    this.accommodations.set(id, updatedAccommodation);
+    return updatedAccommodation;
+  }
+
+  async deleteAccommodation(id: string): Promise<boolean> {
+    return this.accommodations.delete(id);
   }
 
   async getBookings(): Promise<Booking[]> {

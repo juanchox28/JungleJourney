@@ -38,14 +38,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const uploadedUrls: string[] = [];
+      const isProduction = process.env.NODE_ENV === 'production';
+      const uploadsDir = path.join(process.cwd(), isProduction ? 'dist/public/uploads' : 'client/public/uploads');
 
       for (const file of req.files as Express.Multer.File[]) {
         // Generate unique filename
         const filename = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
-        const filepath = path.join(process.cwd(), 'client', 'public', 'uploads', filename);
+        const filepath = path.join(uploadsDir, filename);
 
         // Ensure uploads directory exists
-        const uploadsDir = path.join(process.cwd(), 'client', 'public', 'uploads');
         await import('fs').then(fs => fs.promises.mkdir(uploadsDir, { recursive: true }));
 
         // For now, just save the file without processing
@@ -696,10 +697,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/tours/:id", requireAdmin, async (req, res) => {
     try {
-      // For in-memory storage, we'll recreate the tour
-      const updatedTour = { ...req.body, id: req.params.id };
-      // Note: In a real database, you'd update the existing record
-      res.json(updatedTour);
+      const tour = await storage.updateTour(req.params.id, req.body);
+      if (!tour) {
+        return res.status(404).json({ error: 'Tour not found' });
+      }
+      res.json(tour);
     } catch (error) {
       console.error('Error updating tour:', error);
       res.status(500).json({ error: 'Failed to update tour' });
@@ -708,7 +710,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/tours/:id", requireAdmin, async (req, res) => {
     try {
-      // For in-memory storage, we'd remove from the map
+      const success = await storage.deleteTour(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: 'Tour not found' });
+      }
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting tour:', error);
@@ -729,8 +734,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
     try {
-      const updatedAccommodation = { ...req.body, id: req.params.id };
-      res.json(updatedAccommodation);
+      const accommodation = await storage.updateAccommodation(req.params.id, req.body);
+      if (!accommodation) {
+        return res.status(404).json({ error: 'Accommodation not found' });
+      }
+      res.json(accommodation);
     } catch (error) {
       console.error('Error updating accommodation:', error);
       res.status(500).json({ error: 'Failed to update accommodation' });
@@ -739,6 +747,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
     try {
+      const success = await storage.deleteAccommodation(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: 'Accommodation not found' });
+      }
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting accommodation:', error);
