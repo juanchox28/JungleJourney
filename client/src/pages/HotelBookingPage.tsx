@@ -245,8 +245,19 @@ export default function HotelBookingPage() {
   };
 
   const isCashPaymentAvailable = () => {
-    // Cash payment is now available for all dates
-    return true;
+    if (!checkInDate) return false;
+    const checkIn = new Date(checkInDate);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Reset time to compare dates only
+    checkIn.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    // Cash payment only available for today or tomorrow
+    return checkIn.getTime() === today.getTime() || checkIn.getTime() === tomorrow.getTime();
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -725,7 +736,7 @@ export default function HotelBookingPage() {
                       </div>
                       <p className="text-sm text-gray-600 mt-1">Paga de forma segura en línea</p>
                     </div>
-                    {isCashPaymentAvailable() && (
+                    {isCashPaymentAvailable() ? (
                       <div
                         className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                           paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-200'
@@ -745,7 +756,25 @@ export default function HotelBookingPage() {
                             Efectivo en Recepción
                           </Label>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">Paga cuando llegues</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Solo disponible para reservas que empiecen hoy o mañana
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="border rounded-lg p-4 bg-gray-50 border-gray-200">
+                        <div className="flex items-center text-gray-400">
+                          <input
+                            type="radio"
+                            disabled
+                            className="mr-2"
+                          />
+                          <Label className="cursor-not-allowed">
+                            Efectivo en Recepción
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Solo disponible para reservas que empiecen hoy o mañana
+                        </p>
                       </div>
                     )}
                   </div>

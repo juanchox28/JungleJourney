@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
+  // Dynamic admin password based on environment
+  const ADMIN_PASSWORD = import.meta.env.DEV ? 'admin123' : 'admin123prod';
+
   const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("tours");
@@ -33,7 +36,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -53,7 +56,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/admin/accommodations/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete accommodation");
@@ -71,7 +74,7 @@ export default function AdminPage() {
 
   // Authentication
   const handleLogin = () => {
-    if (adminPassword === "admin123") {
+    if (adminPassword === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem("adminAuthenticated", "true");
     } else {
@@ -115,7 +118,7 @@ export default function AdminPage() {
     queryKey: ["admin-bookings"],
     queryFn: async () => {
       const response = await fetch("/api/admin/bookings", {
-        headers: { Authorization: `Bearer admin123` },
+        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
       });
       if (!response.ok) throw new Error("Failed to fetch bookings");
       return response.json() as Promise<Booking[]>;
@@ -130,7 +133,7 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -151,7 +154,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -171,7 +174,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/admin/tours/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete tour");
@@ -190,7 +193,7 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -211,7 +214,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer admin123`,
+          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify({ status }),
       });
