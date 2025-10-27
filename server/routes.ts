@@ -721,6 +721,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/tours", requireAdmin, async (req, res) => {
+    try {
+      const tours = await storage.getTours();
+      res.json(tours);
+    } catch (error) {
+      console.error('Error fetching tours for admin:', error);
+      res.status(500).json({ error: 'Failed to fetch tours for admin' });
+    }
+  });
+
   // Accommodations CRUD
   app.post("/api/admin/accommodations", requireAdmin, async (req, res) => {
     try {
@@ -755,6 +765,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting accommodation:', error);
       res.status(500).json({ error: 'Failed to delete accommodation' });
+    }
+  });
+
+  app.get("/api/admin/accommodations", requireAdmin, async (req, res) => {
+    try {
+      const accommodations = await storage.getAccommodations();
+      res.json(accommodations);
+    } catch (error) {
+      console.error('Error fetching accommodations for admin:', error);
+      res.status(500).json({ error: 'Failed to fetch accommodations for admin' });
     }
   });
 
