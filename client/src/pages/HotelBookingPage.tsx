@@ -526,7 +526,7 @@ export default function HotelBookingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleDateSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <form onSubmit={handleDateSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <Label htmlFor="checkin">Fecha de Entrada</Label>
                 <Input
@@ -553,15 +553,27 @@ export default function HotelBookingPage() {
               </div>
               <div>
                 <Label htmlFor="guests">Número de Huéspedes</Label>
-                <Input
-                  id="guests"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={totalGuests}
-                  onChange={(e) => setTotalGuests(parseInt(e.target.value) || 1)}
-                  required
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTotalGuests(prev => Math.max(1, prev - 1))}
+                    disabled={totalGuests <= 1}
+                  >
+                    -
+                  </Button>
+                  <span className="w-8 text-center">{totalGuests}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTotalGuests(prev => Math.min(20, prev + 1))}
+                    disabled={totalGuests >= 20}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
               <div className="flex items-end">
                 <Button type="submit" className="w-full">
