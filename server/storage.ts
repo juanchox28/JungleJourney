@@ -1,6 +1,7 @@
 import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
 import { randomUUID } from "crypto";
 import toursJsonData from "../attached_assets/tours_data.json";
+import accommodationsJsonData from "../attached_assets/accommodations_data.json";
 import fs from "fs/promises";
 import path from "path";
 
@@ -48,6 +49,7 @@ export class MemStorage implements IStorage {
   private accommodations: Map<string, Accommodation>;
   private bookings: Map<string, Booking>;
   private toursFilePath: string;
+  private accommodationsFilePath: string;
 
   constructor() {
     this.users = new Map();
@@ -55,6 +57,7 @@ export class MemStorage implements IStorage {
     this.accommodations = new Map();
     this.bookings = new Map();
     this.toursFilePath = path.join(process.cwd(), "attached_assets", "tours_data.json");
+    this.accommodationsFilePath = path.join(process.cwd(), "attached_assets", "accommodations_data.json");
     this.initializeTours();
     this.initializeAccommodations();
   }
@@ -62,6 +65,11 @@ export class MemStorage implements IStorage {
   private async persistTours(): Promise<void> {
     const toursArray = Array.from(this.tours.values());
     await fs.writeFile(this.toursFilePath, JSON.stringify(toursArray, null, 2));
+  }
+
+  private async persistAccommodations(): Promise<void> {
+    const accommodationsArray = Array.from(this.accommodations.values());
+    await fs.writeFile(this.accommodationsFilePath, JSON.stringify(accommodationsArray, null, 2));
   }
 
   private initializeTours() {
@@ -97,60 +105,10 @@ export class MemStorage implements IStorage {
   }
 
   private initializeAccommodations() {
-    // Sample accommodations data
-    const sampleAccommodations: Accommodation[] = [
-      {
-        id: randomUUID(),
-        name: "Hotel Ayahuasca",
-        type: "hotel",
-        description: "Experience authentic Amazon hospitality in our riverside lodge. Traditional ceremonies, comfortable rooms, and direct access to the rainforest.",
-        location: "leticia",
-        pricePerNight: "150000",
-        amenities: JSON.stringify(["WiFi", "Restaurant", "Traditional Ceremonies", "Guided Tours", "Ayahuasca Retreats"]),
-        images: JSON.stringify(["https://conexion-amazonas.com/wp-content/uploads/2025/05/DSCF0164-scaled.jpg"]),
-        maxGuests: 8,
-        availabilityStatus: "available"
-      },
-      {
-        id: randomUUID(),
-        name: "Amazon River Lodge",
-        type: "lodge",
-        description: "Luxurious riverside lodge with stunning Amazon views",
-        location: "leticia",
-        pricePerNight: "250000",
-        amenities: JSON.stringify(["WiFi", "Restaurant", "Bar", "Guided Tours", "Spa"]),
-        images: JSON.stringify(["/images/lodge1.jpg", "/images/lodge2.jpg"]),
-        maxGuests: 4,
-        availabilityStatus: "available"
-      },
-      {
-        id: randomUUID(),
-        name: "Jungle Cabins",
-        type: "cabin",
-        description: "Authentic wooden cabins immersed in the rainforest",
-        location: "puerto-narino",
-        pricePerNight: "180000",
-        amenities: JSON.stringify(["Private Bathroom", "Mosquito Nets", "Eco-Toilets", "Hiking Trails"]),
-        images: JSON.stringify(["/images/cabin1.jpg", "/images/cabin2.jpg"]),
-        maxGuests: 2,
-        availabilityStatus: "available"
-      },
-      {
-        id: randomUUID(),
-        name: "Riverside Hotel",
-        type: "hotel",
-        description: "Modern hotel with river views and city access",
-        location: "leticia",
-        pricePerNight: "320000",
-        amenities: JSON.stringify(["Pool", "Restaurant", "Room Service", "Conference Room", "Laundry"]),
-        images: JSON.stringify(["/images/hotel1.jpg", "/images/hotel2.jpg"]),
-        maxGuests: 6,
-        availabilityStatus: "available"
-      }
-    ];
+    const rawAccommodations = accommodationsJsonData as any[];
 
-    sampleAccommodations.forEach(accommodation => {
-      this.accommodations.set(accommodation.id, accommodation);
+    rawAccommodations.forEach((accommodation) => {
+      this.accommodations.set(accommodation.id, accommodation as Accommodation);
     });
 
     console.log(`Initialized ${this.accommodations.size} accommodations in memory storage`);
@@ -266,6 +224,7 @@ export class MemStorage implements IStorage {
       availabilityStatus: insertAccommodation.availabilityStatus ?? "available",
     };
     this.accommodations.set(id, accommodation);
+    await this.persistAccommodations();
     return accommodation;
   }
 
@@ -275,11 +234,16 @@ export class MemStorage implements IStorage {
 
     const updatedAccommodation = { ...accommodation, ...insertAccommodation };
     this.accommodations.set(id, updatedAccommodation);
+    await this.persistAccommodations();
     return updatedAccommodation;
   }
 
   async deleteAccommodation(id: string): Promise<boolean> {
-    return this.accommodations.delete(id);
+    const success = this.accommodations.delete(id);
+    if (success) {
+      await this.persistAccommodations();
+    }
+    return success;
   }
 
   async getBookings(): Promise<Booking[]> {

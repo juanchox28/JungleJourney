@@ -16,10 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
-  // Dynamic admin password based on environment
-  const ADMIN_PASSWORD = import.meta.env.DEV ? 'admin123' : 'admin123prod';
-
-  const [adminPassword, setAdminPassword] = useState("");
+  const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("tours");
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
@@ -36,7 +33,6 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -55,9 +51,6 @@ export default function AdminPage() {
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/admin/accommodations/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
-        },
       });
       if (!response.ok) throw new Error("Failed to delete accommodation");
       return response.json();
@@ -73,33 +66,36 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
 
   // Authentication
-  const handleLogin = () => {
-    if (adminPassword === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      localStorage.setItem("adminAuthenticated", "true");
-    } else {
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (response.ok) {
+        setIsAuthenticated(true);
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Invalid password",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
     }
   };
 
-  // Check if already authenticated
-  useState(() => {
-    if (localStorage.getItem("adminAuthenticated") === "true") {
-      setIsAuthenticated(true);
-    }
-  });
-
   // Data fetching
   const { data: tours = [] } = useQuery({
     queryKey: ["tours"],
     queryFn: async () => {
-      const response = await fetch("/api/tours", {
-        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
-      });
+      const response = await fetch("/api/tours");
       if (!response.ok) throw new Error("Failed to fetch tours");
       return response.json() as Promise<Tour[]>;
     },
@@ -119,9 +115,7 @@ export default function AdminPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/bookings", {
-        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
-      });
+      const response = await fetch("/api/admin/bookings");
       if (!response.ok) throw new Error("Failed to fetch bookings");
       return response.json() as Promise<Booking[]>;
     },
@@ -135,7 +129,6 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -156,7 +149,6 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -175,9 +167,6 @@ export default function AdminPage() {
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/admin/tours/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
-        },
       });
       if (!response.ok) throw new Error("Failed to delete tour");
       return response.json();
@@ -195,7 +184,6 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -216,7 +204,6 @@ export default function AdminPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
         },
         body: JSON.stringify({ status }),
       });
@@ -252,8 +239,8 @@ export default function AdminPage() {
                 <Input
                   id="password"
                   type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
                 />
               </div>
@@ -328,7 +315,6 @@ export default function AdminPage() {
                       }
                     }}
                     isLoading={editingTour ? updateTourMutation.isPending : createTourMutation.isPending}
-                    adminPassword={ADMIN_PASSWORD}
                   />
                 </DialogContent>
               </Dialog>
@@ -730,11 +716,10 @@ export default function AdminPage() {
 }
 
 // Form Components
-function TourForm({ tour, onSubmit, isLoading, adminPassword }: {
+function TourForm({ tour, onSubmit, isLoading }: {
   tour?: Tour | null;
   onSubmit: (data: any) => void;
   isLoading: boolean;
-  adminPassword?: string;
 }) {
   const [formData, setFormData] = useState({
     name: tour?.name || "",
@@ -876,7 +861,6 @@ function TourForm({ tour, onSubmit, isLoading, adminPassword }: {
           images={imageUrls}
           onImagesChange={setImageUrls}
           maxImages={10}
-          adminPassword={adminPassword}
         />
       </div>
 
