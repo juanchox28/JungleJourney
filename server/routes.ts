@@ -644,16 +644,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes - simple password protection for development
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+      req.session.isAdmin = true;
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, error: "Invalid password" });
+    }
+  });
+
   const requireAdmin = (req: any, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No authorization token provided' });
+    if (req.session.isAdmin) {
+      next();
+    } else {
+      res.status(401).json({ error: 'Unauthorized' });
     }
-    const token = authHeader.substring(7);
-    if (token !== ADMIN_PASSWORD) {
-      return res.status(403).json({ error: 'Invalid admin password' });
-    }
-    next();
   };
 
   // -------------------- ADMIN ACCOMMODATION CRUD --------------------
