@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Tour, Accommodation, Booking } from "@shared/schema";
@@ -16,9 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
-  // Dynamic admin password based on environment
-  const ADMIN_PASSWORD = import.meta.env.DEV ? 'admin123' : 'admin123prod';
-
   const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("tours");
@@ -32,11 +29,12 @@ export default function AdminPage() {
   // Update accommodation mutation (missing from current code)
   const updateAccommodationMutation = useMutation({
     mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch(`/api/admin/accommodations/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -53,10 +51,11 @@ export default function AdminPage() {
 
   const deleteAccommodationMutation = useMutation({
     mutationFn: async (id: string) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch(`/api/admin/accommodations/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete accommodation");
@@ -73,11 +72,16 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
 
   // Authentication
-  const handleLogin = () => {
-    if (adminPassword === ADMIN_PASSWORD) {
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("/api/admin/tours", {
+        headers: { Authorization: `Bearer ${adminPassword}` },
+      });
+      if (!response.ok) throw new Error("Authentication failed");
+
       setIsAuthenticated(true);
-      localStorage.setItem("adminAuthenticated", "true");
-    } else {
+      localStorage.setItem("adminPassword", adminPassword);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Invalid password",
@@ -87,18 +91,21 @@ export default function AdminPage() {
   };
 
   // Check if already authenticated
-  useState(() => {
-    if (localStorage.getItem("adminAuthenticated") === "true") {
+  useEffect(() => {
+    const storedPassword = localStorage.getItem("adminPassword");
+    if (storedPassword) {
+      setAdminPassword(storedPassword);
       setIsAuthenticated(true);
     }
-  });
+  }, []);
 
   // Data fetching
   const { data: tours = [] } = useQuery({
     queryKey: ["tours"],
     queryFn: async () => {
-      const response = await fetch("/api/tours", {
-        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
+      const password = localStorage.getItem("adminPassword");
+      const response = await fetch("/api/admin/tours", {
+        headers: { Authorization: `Bearer ${password}` },
       });
       if (!response.ok) throw new Error("Failed to fetch tours");
       return response.json() as Promise<Tour[]>;
@@ -109,7 +116,10 @@ export default function AdminPage() {
   const { data: accommodations = [] } = useQuery({
     queryKey: ["accommodations"],
     queryFn: async () => {
-      const response = await fetch("/api/accommodations");
+      const password = localStorage.getItem("adminPassword");
+      const response = await fetch("/api/admin/accommodations", {
+        headers: { Authorization: `Bearer ${password}` },
+      });
       if (!response.ok) throw new Error("Failed to fetch accommodations");
       return response.json() as Promise<Accommodation[]>;
     },
@@ -119,8 +129,9 @@ export default function AdminPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch("/api/admin/bookings", {
-        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
+        headers: { Authorization: `Bearer ${password}` },
       });
       if (!response.ok) throw new Error("Failed to fetch bookings");
       return response.json() as Promise<Booking[]>;
@@ -131,11 +142,12 @@ export default function AdminPage() {
   // Mutations
   const createTourMutation = useMutation({
     mutationFn: async (tourData: any) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch("/api/admin/tours", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -152,11 +164,12 @@ export default function AdminPage() {
 
   const updateTourMutation = useMutation({
     mutationFn: async ({ id, tourData }: { id: string; tourData: any }) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch(`/api/admin/tours/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify(tourData),
       });
@@ -173,10 +186,11 @@ export default function AdminPage() {
 
   const deleteTourMutation = useMutation({
     mutationFn: async (id: string) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch(`/api/admin/tours/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete tour");
@@ -191,11 +205,12 @@ export default function AdminPage() {
 
   const createAccommodationMutation = useMutation({
     mutationFn: async (accommodationData: any) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch("/api/admin/accommodations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify(accommodationData),
       });
@@ -212,11 +227,12 @@ export default function AdminPage() {
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const password = localStorage.getItem("adminPassword");
       const response = await fetch(`/api/admin/bookings/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_PASSWORD}`,
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify({ status }),
       });
