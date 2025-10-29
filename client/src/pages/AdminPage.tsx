@@ -97,7 +97,9 @@ export default function AdminPage() {
   const { data: tours = [] } = useQuery({
     queryKey: ["tours"],
     queryFn: async () => {
-      const response = await fetch("/api/tours");
+      const response = await fetch("/api/tours", {
+        headers: { Authorization: `Bearer ${ADMIN_PASSWORD}` },
+      });
       if (!response.ok) throw new Error("Failed to fetch tours");
       return response.json() as Promise<Tour[]>;
     },
@@ -326,6 +328,7 @@ export default function AdminPage() {
                       }
                     }}
                     isLoading={editingTour ? updateTourMutation.isPending : createTourMutation.isPending}
+                    adminPassword={ADMIN_PASSWORD}
                   />
                 </DialogContent>
               </Dialog>
@@ -727,10 +730,11 @@ export default function AdminPage() {
 }
 
 // Form Components
-function TourForm({ tour, onSubmit, isLoading }: {
+function TourForm({ tour, onSubmit, isLoading, adminPassword }: {
   tour?: Tour | null;
   onSubmit: (data: any) => void;
   isLoading: boolean;
+  adminPassword?: string;
 }) {
   const [formData, setFormData] = useState({
     name: tour?.name || "",
@@ -797,11 +801,17 @@ function TourForm({ tour, onSubmit, isLoading }: {
         </div>
         <div>
           <Label htmlFor="category">Category</Label>
-          <Input
+          <select
             id="category"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          />
+            className="w-full border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="">Select Category</option>
+            <option value="Nature">Nature</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Cultural">Cultural</option>
+          </select>
         </div>
       </div>
 
@@ -832,15 +842,22 @@ function TourForm({ tour, onSubmit, isLoading }: {
             id="duration"
             value={formData.duration}
             onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+            placeholder="e.g., 3 hours, 2 days"
           />
         </div>
         <div>
           <Label htmlFor="location">Location</Label>
-          <Input
+          <select
             id="location"
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          />
+            className="w-full border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="">Select Location</option>
+            <option value="leticia">Leticia</option>
+            <option value="puerto-narino">Puerto Nariño</option>
+            <option value="mocagua">Mocagua</option>
+          </select>
         </div>
         <div>
           <Label htmlFor="basePrice">Base Price</Label>
@@ -859,6 +876,7 @@ function TourForm({ tour, onSubmit, isLoading }: {
           images={imageUrls}
           onImagesChange={setImageUrls}
           maxImages={10}
+          adminPassword={adminPassword}
         />
       </div>
 

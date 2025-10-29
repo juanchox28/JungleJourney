@@ -1,6 +1,8 @@
 import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
 import { randomUUID } from "crypto";
 import toursJsonData from "../attached_assets/tours_data.json";
+import fs from "fs/promises";
+import path from "path";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -45,14 +47,21 @@ export class MemStorage implements IStorage {
   private tours: Map<string, Tour>;
   private accommodations: Map<string, Accommodation>;
   private bookings: Map<string, Booking>;
+  private toursFilePath: string;
 
   constructor() {
     this.users = new Map();
     this.tours = new Map();
     this.accommodations = new Map();
     this.bookings = new Map();
+    this.toursFilePath = path.join(process.cwd(), "attached_assets", "tours_data.json");
     this.initializeTours();
     this.initializeAccommodations();
+  }
+
+  private async persistTours(): Promise<void> {
+    const toursArray = Array.from(this.tours.values());
+    await fs.writeFile(this.toursFilePath, JSON.stringify(toursArray, null, 2));
   }
 
   private initializeTours() {
@@ -202,6 +211,7 @@ export class MemStorage implements IStorage {
       images: insertTour.images ?? null,
     };
     this.tours.set(id, tour);
+    await this.persistTours();
     return tour;
   }
 
@@ -211,11 +221,16 @@ export class MemStorage implements IStorage {
 
     const updatedTour = { ...tour, ...insertTour };
     this.tours.set(id, updatedTour);
+    await this.persistTours();
     return updatedTour;
   }
 
   async deleteTour(id: string): Promise<boolean> {
-    return this.tours.delete(id);
+    const success = this.tours.delete(id);
+    if (success) {
+      await this.persistTours();
+    }
+    return success;
   }
 
   async getAccommodations(filters?: { location?: string; type?: string }): Promise<Accommodation[]> {

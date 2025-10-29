@@ -11,13 +11,15 @@ interface ImageUploadProps {
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
   className?: string;
+  adminPassword?: string;
 }
 
 export default function ImageUpload({
   images,
   onImagesChange,
   maxImages = 10,
-  className = ""
+  className = "",
+  adminPassword = ""
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -41,6 +43,7 @@ export default function ImageUpload({
 
       const response = await fetch('/api/upload/images', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${adminPassword}` },
         body: formData,
       });
 
