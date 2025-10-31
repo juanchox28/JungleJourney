@@ -7,9 +7,42 @@ import path from "path";
 import multer from "multer";
 import fetch from "node-fetch";
 import { sendConfirmationEmail } from "./emailService.js";
+import passport from "passport";
+import { Strategy as GitHubStrategy } from "passport-github2";
 // import sharp from "sharp";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // GitHub OAuth Configuration
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+  const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret';
+
+  // Configure Passport GitHub Strategy
+  passport.use(new GitHubStrategy({
+    clientID: GITHUB_CLIENT_ID!,
+    clientSecret: GITHUB_CLIENT_SECRET!,
+    callbackURL: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/api/auth/github/callback`
+  },
+  function(accessToken: string, refreshToken: string, profile: any, done: any) {
+    // Here you would typically save the user to your database
+    // For now, we'll just return the profile
+    console.log('GitHub OAuth successful for user:', profile.username);
+    return done(null, profile);
+  }));
+
+  // Serialize user for session
+  passport.serializeUser(function(user: any, done) {
+    done(null, user);
+  });
+
+  passport.deserializeUser(function(user: any, done) {
+    done(null, user);
+  });
+
+  // Initialize Passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   // Wompi configuration
   const WOMPI_BASE = process.env.WOMPI_BASE || "https://sandbox.wompi.co/v1";
   const WOMPI_PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
@@ -647,18 +680,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes - simple password protection for development
+  // GitHub OAuth Routes
+  app.get('/api/auth/github',
+    passport.authenticate('github', { scope: ['user:email'] }));
+
+  app.get('/api/auth/github/callback',
+    passport.authenticate('github', { failureRedirect: '/admin' }),
+    function(req, res) {
+      // Successful authentication, redirect to admin
+      console.log('✅ GitHub OAuth successful, redirecting to admin');
+      (req.session as any).isAdmin = true;
+      res.redirect('/admin');
+    });
+
+  app.get('/api/auth/logout', function(req, res, next) {
+    (req.session as any).isAdmin = false;
+    req.logout(function(err) {
+      if (err) { return next(err); }
+      res.redirect('/admin');
+    });
+  });
+
+  // Admin routes - password protection as fallback
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
   app.post("/api/admin/login", (req, res) => {
     console.log("🔐 Server: Admin login attempt");
     const { password } = req.body;
+    console.log("🔑 Provided password:", password ? "***" : "empty");
+    console.log("🔑 Expected password:", ADMIN_PASSWORD ? "***" : "not set");
+
     if (password === ADMIN_PASSWORD) {
       console.log("✅ Server: Admin login successful");
       (req.session as any).isAdmin = true;
       res.json({ success: true });
     } else {
       console.log("❌ Server: Admin login failed - invalid password");
+      console.log("❌ Server: Password check:", password === ADMIN_PASSWORD);
       res.status(401).json({ success: false, error: "Invalid password" });
     }
   });

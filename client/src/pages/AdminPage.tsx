@@ -273,13 +273,31 @@ export default function AdminPage() {
       {/* Navigation Breadcrumb */}
       <div className="bg-white/80 backdrop-blur-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link href="/" className="flex items-center hover:text-primary transition-colors">
-              <Home className="w-4 h-4 mr-1" />
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">Admin Dashboard</span>
+          <nav className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Link href="/" className="flex items-center hover:text-primary transition-colors">
+                <Home className="w-4 h-4 mr-1" />
+                Home
+              </Link>
+              <span>/</span>
+              <span className="text-gray-900 font-medium">Admin Dashboard</span>
+            </div>
+            {isAuthenticated && (
+              <div className="flex items-center space-x-4">
+                <a
+                  href="/api/auth/github"
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Login with GitHub
+                </a>
+                <button
+                  onClick={() => fetch('/api/auth/logout')}
+                  className="text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       </div>
