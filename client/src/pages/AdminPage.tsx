@@ -16,9 +16,11 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
-  const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState("tours");
+   const [password, setPassword] = useState("");
+   const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const [activeTab, setActiveTab] = useState("tours");
+
+   console.log("🔍 AdminPage render - isAuthenticated:", isAuthenticated);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
@@ -66,51 +68,63 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
 
   // Authentication
-  const handleLogin = async () => {
-    try {
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      if (response.ok) {
-        setIsAuthenticated(true);
-      } else {
-        toast({
-          title: "Error",
-          description: "Invalid password",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  };
+   const handleLogin = async (e?: React.FormEvent) => {
+     if (e) e.preventDefault();
+     console.log("🔐 Attempting admin login...");
+     try {
+       const response = await fetch("/api/admin/login", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ password }),
+       });
+       console.log("🔐 Login response status:", response.status);
+       if (response.ok) {
+         console.log("✅ Admin login successful");
+         setIsAuthenticated(true);
+       } else {
+         console.log("❌ Admin login failed - invalid password");
+         toast({
+           title: "Error",
+           description: "Invalid password",
+           variant: "destructive",
+         });
+       }
+     } catch (error) {
+       console.log("❌ Admin login error:", error);
+       toast({
+         title: "Error",
+         description: "An unexpected error occurred",
+         variant: "destructive",
+       });
+     }
+   };
 
   // Data fetching
-  const { data: tours = [] } = useQuery({
-    queryKey: ["tours"],
-    queryFn: async () => {
-      const response = await fetch("/api/tours");
-      if (!response.ok) throw new Error("Failed to fetch tours");
-      return response.json() as Promise<Tour[]>;
-    },
-    enabled: isAuthenticated,
-  });
+   const { data: tours = [] } = useQuery({
+     queryKey: ["tours"],
+     queryFn: async () => {
+       console.log("🔍 Fetching tours...");
+       const response = await fetch("/api/tours");
+       if (!response.ok) throw new Error("Failed to fetch tours");
+       const data = await response.json();
+       console.log("✅ Tours fetched:", data.length, "items");
+       return data as Promise<Tour[]>;
+     },
+     enabled: isAuthenticated,
+   });
 
-  const { data: accommodations = [] } = useQuery({
-    queryKey: ["accommodations"],
-    queryFn: async () => {
-      const response = await fetch("/api/accommodations");
-      if (!response.ok) throw new Error("Failed to fetch accommodations");
-      return response.json() as Promise<Accommodation[]>;
-    },
-    enabled: isAuthenticated,
-  });
+   const { data: accommodations = [] } = useQuery({
+     queryKey: ["accommodations"],
+     queryFn: async () => {
+       console.log("🔍 Fetching accommodations...");
+       const response = await fetch("/api/accommodations");
+       if (!response.ok) throw new Error("Failed to fetch accommodations");
+       const data = await response.json();
+       console.log("✅ Accommodations fetched:", data.length, "items");
+       return data as Promise<Accommodation[]>;
+     },
+     enabled: isAuthenticated,
+   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
@@ -233,21 +247,21 @@ export default function AdminPage() {
             <CardDescription>Enter the admin password to access the management interface</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
                 />
               </div>
-              <Button onClick={handleLogin} className="w-full">
+              <Button type="submit" className="w-full">
                 Login
               </Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
       </div>

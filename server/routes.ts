@@ -65,21 +65,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tours", async (req, res) => {
     try {
+      console.log("🔍 Server: Fetching tours with filters:", req.query);
       const { location, category } = req.query;
       const filters: { location?: string; category?: string } = {};
-      
+
       if (location && typeof location === 'string') {
         filters.location = location;
       }
-      
+
       if (category && typeof category === 'string') {
         filters.category = category;
       }
-      
+
       const tours = await storage.getTours(filters);
+      console.log("✅ Server: Returning", tours.length, "tours");
       res.json(tours);
     } catch (error) {
-      console.error('Error fetching tours:', error);
+      console.error('❌ Server: Error fetching tours:', error);
       res.status(500).json({ error: 'Failed to fetch tours' });
     }
   });
@@ -121,6 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/accommodations", async (req, res) => {
     try {
+      console.log("🔍 Server: Fetching accommodations with filters:", req.query);
       const { location, type } = req.query;
       const filters: { location?: string; type?: string } = {};
 
@@ -133,9 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const accommodations = await storage.getAccommodations(filters);
+      console.log("✅ Server: Returning", accommodations.length, "accommodations");
       res.json(accommodations);
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+      console.error('❌ Server: Error fetching accommodations:', error);
       res.status(500).json({ error: 'Failed to fetch accommodations' });
     }
   });
@@ -645,19 +649,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
   app.post("/api/admin/login", (req, res) => {
+    console.log("🔐 Server: Admin login attempt");
     const { password } = req.body;
     if (password === ADMIN_PASSWORD) {
-      req.session.isAdmin = true;
+      console.log("✅ Server: Admin login successful");
+      (req.session as any).isAdmin = true;
       res.json({ success: true });
     } else {
+      console.log("❌ Server: Admin login failed - invalid password");
       res.status(401).json({ success: false, error: "Invalid password" });
     }
   });
 
   const requireAdmin = (req: any, res: any, next: any) => {
-    if (req.session.isAdmin) {
+    console.log("🔒 Server: Checking admin authentication");
+    if ((req.session as any).isAdmin) {
+      console.log("✅ Server: Admin authenticated");
       next();
     } else {
+      console.log("❌ Server: Admin not authenticated");
       res.status(401).json({ error: 'Unauthorized' });
     }
   };
