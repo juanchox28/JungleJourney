@@ -79,6 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tours = await storage.getTours(filters);
       console.log("✅ Server: Returning", tours.length, "tours");
+      console.log("📋 Server: First tour sample:", tours[0] ? { name: tours[0].name, location: tours[0].location, basePrice: tours[0].basePrice } : "No tours");
       res.json(tours);
     } catch (error) {
       console.error('❌ Server: Error fetching tours:', error);
@@ -137,6 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const accommodations = await storage.getAccommodations(filters);
       console.log("✅ Server: Returning", accommodations.length, "accommodations");
+      console.log("📋 Server: First accommodation sample:", accommodations[0] ? { name: accommodations[0].name, location: accommodations[0].location, pricePerNight: accommodations[0].pricePerNight } : "No accommodations");
       res.json(accommodations);
     } catch (error) {
       console.error('❌ Server: Error fetching accommodations:', error);
