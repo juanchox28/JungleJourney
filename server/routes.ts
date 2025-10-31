@@ -16,6 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
   const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
   const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret';
+  const ALLOWED_GITHUB_USERS = process.env.ALLOWED_GITHUB_USERS?.split(',') || ['juanchox28'];
 
   // Configure Passport GitHub Strategy
   passport.use(new GitHubStrategy({
@@ -24,9 +25,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     callbackURL: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/api/auth/github/callback`
   },
   function(accessToken: string, refreshToken: string, profile: any, done: any) {
-    // Here you would typically save the user to your database
-    // For now, we'll just return the profile
-    console.log('GitHub OAuth successful for user:', profile.username);
+    // Check if user is authorized
+    if (!ALLOWED_GITHUB_USERS.includes(profile.username)) {
+      console.log('❌ GitHub OAuth denied for user:', profile.username, '- not in allowed list:', ALLOWED_GITHUB_USERS);
+      return done(null, false, { message: 'Unauthorized user' });
+    }
+
+    console.log('✅ GitHub OAuth successful for authorized user:', profile.username);
     return done(null, profile);
   }));
 
@@ -685,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('github', { scope: ['user:email'] }));
 
   app.get('/api/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/admin' }),
+    passport.authenticate('github', { failureRedirect: '/admin?error=github-auth-failed' }),
     function(req, res) {
       // Successful authentication, redirect to admin
       console.log('✅ GitHub OAuth successful, redirecting to admin');
