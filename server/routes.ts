@@ -7,46 +7,9 @@ import path from "path";
 import multer from "multer";
 import fetch from "node-fetch";
 import { sendConfirmationEmail } from "./emailService.js";
-import passport from "passport";
-import { Strategy as GitHubStrategy } from "passport-github2";
 // import sharp from "sharp";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // GitHub OAuth Configuration
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-  const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret';
-  const ALLOWED_GITHUB_USERS = process.env.ALLOWED_GITHUB_USERS?.split(',') || ['juanchox28'];
-
-  // Configure Passport GitHub Strategy
-  passport.use(new GitHubStrategy({
-    clientID: GITHUB_CLIENT_ID!,
-    clientSecret: GITHUB_CLIENT_SECRET!,
-    callbackURL: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/api/auth/github/callback`
-  },
-  function(accessToken: string, refreshToken: string, profile: any, done: any) {
-    // Check if user is authorized
-    if (!ALLOWED_GITHUB_USERS.includes(profile.username)) {
-      console.log('❌ GitHub OAuth denied for user:', profile.username, '- not in allowed list:', ALLOWED_GITHUB_USERS);
-      return done(null, false, { message: 'Unauthorized user' });
-    }
-
-    console.log('✅ GitHub OAuth successful for authorized user:', profile.username);
-    return done(null, profile);
-  }));
-
-  // Serialize user for session
-  passport.serializeUser(function(user: any, done) {
-    done(null, user);
-  });
-
-  passport.deserializeUser(function(user: any, done) {
-    done(null, user);
-  });
-
-  // Initialize Passport
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   // Wompi configuration
   const WOMPI_BASE = process.env.WOMPI_BASE || "https://sandbox.wompi.co/v1";
@@ -685,23 +648,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GitHub OAuth Routes
-  app.get('/api/auth/github',
-    passport.authenticate('github', { scope: ['user:email'] }));
-
-  app.get('/api/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/admin?error=github-auth-failed' }),
-    function(req, res) {
-      // Successful authentication, redirect to admin
-      console.log('✅ GitHub OAuth successful, redirecting to admin');
-      (req.session as any).isAdmin = true;
-      res.redirect('/admin');
-    });
-
   app.get('/api/auth/logout', function(req, res, next) {
     (req.session as any).isAdmin = false;
-    req.logout(function(err) {
-      if (err) { return next(err); }
+    req.session.destroy((err) => {
+      if (err) {
+        return next(err);
+      }
       res.redirect('/admin');
     });
   });
@@ -721,7 +673,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } else {
       console.log("❌ Server: Admin login failed - invalid password");
-      console.log("❌ Server: Password check:", password === ADMIN_PASSWORD);
       res.status(401).json({ success: false, error: "Invalid password" });
     }
   });
