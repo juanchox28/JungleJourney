@@ -71,7 +71,7 @@ export default defineConfig({
   root: path.resolve(import.meta.dirname, "client"),
   test: {
     include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'],
-    exclude: ['**/node_modules/**', '**/.git/**', '**/tests/e2e/**'],
+    exclude: ['**/node_modules/**', '**/.git/**'],
     root: path.resolve(import.meta.dirname),
   },
   build: {
