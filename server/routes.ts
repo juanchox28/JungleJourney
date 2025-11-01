@@ -664,13 +664,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/login", (req, res) => {
     console.log("🔐 Server: Admin login attempt");
     const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD;
     console.log("🔑 Provided password:", password ? "***" : "empty");
-    console.log("🔑 Expected password:", ADMIN_PASSWORD ? "***" : "not set");
+    console.log("🔑 Expected password:", adminPassword ? "***" : "not set");
 
-    if (password === ADMIN_PASSWORD) {
+    if (adminPassword && password === adminPassword) {
       console.log("✅ Server: Admin login successful");
       (req.session as any).isAdmin = true;
-      res.json({ success: true });
+      req.session.save((err) => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ success: false, error: "Error saving session" });
+        }
+        res.json({ success: true });
+      });
     } else {
       console.log("❌ Server: Admin login failed - invalid password");
       res.status(401).json({ success: false, error: "Invalid password" });

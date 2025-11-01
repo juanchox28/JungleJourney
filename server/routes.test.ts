@@ -39,4 +39,39 @@ describe("Admin Routes", () => {
       .send({ password: "admin123" });
     expect(response.status).toBe(200);
   });
+
+  it("should allow access to protected routes after login", async () => {
+    process.env.ADMIN_PASSWORD = "admin123";
+    const agent = request.agent(app);
+    await agent
+      .post("/api/admin/login")
+      .send({ password: "admin123" });
+    const response = await agent.get("/api/admin/bookings");
+    expect(response.status).toBe(200);
+  });
+
+  it("should not allow access to protected routes without login", async () => {
+    const response = await request(app).get("/api/admin/bookings");
+    expect(response.status).toBe(401);
+  });
+
+  it("should return 401 if ADMIN_PASSWORD is not set", async () => {
+    const originalPassword = process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_PASSWORD;
+    const response = await request(app)
+      .post("/api/admin/login")
+      .send({ password: "admin123" });
+    expect(response.status).toBe(401);
+    process.env.ADMIN_PASSWORD = originalPassword;
+  });
+
+  it("should return 401 if ADMIN_PASSWORD is not set and password is empty", async () => {
+    const originalPassword = process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_PASSWORD;
+    const response = await request(app)
+      .post("/api/admin/login")
+      .send({ password: "" });
+    expect(response.status).toBe(401);
+    process.env.ADMIN_PASSWORD = originalPassword;
+  });
 });
