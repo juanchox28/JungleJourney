@@ -74,4 +74,14 @@ describe("Admin Routes", () => {
     expect(response.status).toBe(401);
     process.env.ADMIN_PASSWORD = originalPassword;
   });
+
+  it("should return 401 if ADMIN_PASSWORD is not set", async () => {
+    const originalPassword = process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_PASSWORD;
+    const response = await request(app)
+      .post("/api/admin/login")
+      .send({ password: "somepassword" });
+    expect(response.status).toBe(401);
+    process.env.ADMIN_PASSWORD = originalPassword;
+  });
 });

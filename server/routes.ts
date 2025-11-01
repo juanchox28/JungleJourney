@@ -665,10 +665,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("🔐 Server: Admin login attempt");
     const { password } = req.body;
     const adminPassword = process.env.ADMIN_PASSWORD;
-    console.log("🔑 Provided password:", password ? "***" : "empty");
-    console.log("🔑 Expected password:", adminPassword ? "***" : "not set");
 
-    if (adminPassword && password === adminPassword) {
+    if (!adminPassword || typeof adminPassword !== 'string' || adminPassword.length === 0) {
+      console.error("❌ ADMIN_PASSWORD is not set or is empty. Cannot log in.");
+      return res.status(401).json({ success: false, error: "Invalid credentials" });
+    }
+
+    console.log("🔑 Provided password:", password ? "***" : "empty");
+
+    if (password === adminPassword) {
       console.log("✅ Server: Admin login successful");
       (req.session as any).isAdmin = true;
       req.session.save((err) => {
@@ -680,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } else {
       console.log("❌ Server: Admin login failed - invalid password");
-      res.status(401).json({ success: false, error: "Invalid password" });
+      res.status(401).json({ success: false, error: "Invalid credentials" });
     }
   });
 
