@@ -672,6 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     console.log("🔑 Provided password:", password ? "***" : "empty");
+    console.log("🔑 Expected password:", adminPassword ? "***" : "not set");
 
     if (password === adminPassword) {
       console.log("✅ Server: Admin login successful");
