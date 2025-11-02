@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "name": "Hotel Ayahuasca",
+    "type": "hotel",
+    "description": "Experience authentic Amazon hospitality in our riverside lodge. Traditional ceremonies, comfortable rooms, and direct access to the rainforest.",
+    "location": "leticia",
+    "pricePerNight": "150000",
+    "amenities": "[\"WiFi\", \"Restaurant\", \"Traditional Ceremonies\", \"Guided Tours\", \"Ayahuasca Retreats\"]",
+    "images": "[\"https://conexion-amazonas.com/wp-content/uploads/2025/05/DSCF0164-scaled.jpg\"]",
+    "maxGuests": 8,
+    "availabilityStatus": "available"
+  },
+  {
+    "id": "2",
+    "name": "Amazon River Lodge",
+    "type": "lodge",
+    "description": "Luxurious riverside lodge with stunning Amazon views",
+    "location": "leticia",
+    "pricePerNight": "250000",
+    "amenities": "[\"WiFi\", \"Restaurant\", \"Bar\", \"Guided Tours\", \"Spa\"]",
+    "images": "[\"/images/lodge1.jpg\", \"/images/lodge2.jpg\"]",
+    "maxGuests": 4,
+    "availabilityStatus": "available"
+  },
+  {
+    "id": "3",
+    "name": "Jungle Cabins",
+    "type": "cabin",
+    "description": "Authentic wooden cabins immersed in the rainforest",
+    "location": "puerto-narino",
+    "pricePerNight": "180000",
+    "amenities": "[\"Private Bathroom\", \"Mosquito Nets\", \"Eco-Toilets\", \"Hiking Trails\"]",
+    "images": "[\"/images/cabin1.jpg\", \"/images/cabin2.jpg\"]",
+    "maxGuests": 2,
+    "availabilityStatus": "available"
+  },
+  {
+    "id": "4",
+    "name": "Riverside Hotel",
+    "type": "hotel",
+    "description": "Modern hotel with river views and city access",
+    "location": "leticia",
+    "pricePerNight": "320000",
+    "amenities": "[\"Pool\", \"Restaurant\", \"Room Service\", \"Conference Room\", \"Laundry\"]",
+    "images": "[\"/images/hotel1.jpg\", \"/images/hotel2.jpg\"]",
+    "maxGuests": 6,
+    "availabilityStatus": "available"
+  }
+]
