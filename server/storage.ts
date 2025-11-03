@@ -1,7 +1,7 @@
 import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
 import { randomUUID } from "crypto";
-import toursJsonData from "../attached_assets/tours_data.json";
-import accommodationsJsonData from "../attached_assets/accommodations_data.json";
+import toursJsonData from "../client/public/tours_data.json";
+import accommodationsJsonData from "../client/public/accommodations_data.json";
 import fs from "fs/promises";
 import path from "path";
 
@@ -56,8 +56,8 @@ export class MemStorage implements IStorage {
     this.tours = new Map();
     this.accommodations = new Map();
     this.bookings = new Map();
-    this.toursFilePath = path.join(process.cwd(), "attached_assets", "tours_data.json");
-    this.accommodationsFilePath = path.join(process.cwd(), "attached_assets", "accommodations_data.json");
+    this.toursFilePath = path.join(process.cwd(), "client", "public", "tours_data.json");
+    this.accommodationsFilePath = path.join(process.cwd(), "client", "public", "accommodations_data.json");
     this.initializeTours();
     this.initializeAccommodations();
   }
