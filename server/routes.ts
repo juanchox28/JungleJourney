@@ -651,12 +651,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err) {
         return next(err);
       }
-      res.redirect('/admin');
+      res.redirect('/naane');
     });
   });
 
   // Admin routes - no authentication required
-  app.post("/api/admin/login", (req, res) => {
+  app.post("/api/naane/login", (req, res) => {
     console.log("🔓 Server: Admin login bypassed - no authentication required");
     (req.session as any).isAdmin = true;
     req.session.save((err) => {
@@ -675,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Tours CRUD
-  app.get("/api/admin/tours", requireAdmin, async (req, res) => {
+  app.get("/api/naane/tours", requireAdmin, async (req, res) => {
     try {
       const tours = await storage.getTours();
       res.json(tours);
@@ -685,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/tours", requireAdmin, async (req, res) => {
+  app.post("/api/naane/tours", requireAdmin, async (req, res) => {
     try {
       const tour = await storage.createTour(req.body);
       res.status(201).json(tour);
@@ -695,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/tours/:id", requireAdmin, async (req, res) => {
     try {
       const tour = await storage.updateTour(req.params.id, req.body);
       if (!tour) {
@@ -708,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/naane/tours/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteTour(req.params.id);
       if (!success) {
@@ -722,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Accommodations CRUD
-  app.get("/api/admin/accommodations", requireAdmin, async (req, res) => {
+  app.get("/api/naane/accommodations", requireAdmin, async (req, res) => {
     try {
       const accommodations = await storage.getAccommodations();
       res.json(accommodations);
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/accommodations", requireAdmin, async (req, res) => {
+  app.post("/api/naane/accommodations", requireAdmin, async (req, res) => {
     try {
       const accommodation = await storage.createAccommodation(req.body);
       res.status(201).json(accommodation);
@@ -742,7 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/accommodations/:id", requireAdmin, async (req, res) => {
     try {
       const accommodation = await storage.updateAccommodation(req.params.id, req.body);
       if (!accommodation) {
@@ -755,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/naane/accommodations/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteAccommodation(req.params.id);
       if (!success) {
@@ -769,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bookings management
-  app.get("/api/admin/bookings", requireAdmin, async (req, res) => {
+  app.get("/api/naane/bookings", requireAdmin, async (req, res) => {
     try {
       const bookings = await storage.getBookings();
       res.json(bookings);
@@ -779,7 +779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/bookings/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/bookings/:id", requireAdmin, async (req, res) => {
     try {
       const updatedBooking = { ...req.body, id: req.params.id };
       res.json(updatedBooking);

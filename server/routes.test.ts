@@ -27,7 +27,7 @@ describe("Admin Routes", () => {
 
   it("should return 401 for incorrect password", async () => {
     const response = await request(app)
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "wrongpassword" });
     expect(response.status).toBe(401);
   });
@@ -35,7 +35,7 @@ describe("Admin Routes", () => {
   it("should return 200 for correct password", async () => {
     process.env.ADMIN_PASSWORD = "admin123";
     const response = await request(app)
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "admin123" });
     expect(response.status).toBe(200);
   });
@@ -44,14 +44,14 @@ describe("Admin Routes", () => {
     process.env.ADMIN_PASSWORD = "admin123";
     const agent = request.agent(app);
     await agent
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "admin123" });
-    const response = await agent.get("/api/admin/bookings");
+    const response = await agent.get("/api/naane/bookings");
     expect(response.status).toBe(200);
   });
 
   it("should not allow access to protected routes without login", async () => {
-    const response = await request(app).get("/api/admin/bookings");
+    const response = await request(app).get("/api/naane/bookings");
     expect(response.status).toBe(401);
   });
 
@@ -59,7 +59,7 @@ describe("Admin Routes", () => {
     const originalPassword = process.env.ADMIN_PASSWORD;
     delete process.env.ADMIN_PASSWORD;
     const response = await request(app)
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "admin123" });
     expect(response.status).toBe(401);
     process.env.ADMIN_PASSWORD = originalPassword;
@@ -69,7 +69,7 @@ describe("Admin Routes", () => {
     const originalPassword = process.env.ADMIN_PASSWORD;
     delete process.env.ADMIN_PASSWORD;
     const response = await request(app)
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "" });
     expect(response.status).toBe(401);
     process.env.ADMIN_PASSWORD = originalPassword;
@@ -79,7 +79,7 @@ describe("Admin Routes", () => {
     const originalPassword = process.env.ADMIN_PASSWORD;
     delete process.env.ADMIN_PASSWORD;
     const response = await request(app)
-      .post("/api/admin/login")
+      .post("/api/naane/login")
       .send({ password: "somepassword" });
     expect(response.status).toBe(401);
     process.env.ADMIN_PASSWORD = originalPassword;
