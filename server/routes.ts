@@ -675,6 +675,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Tours CRUD
+  app.get("/api/admin/tours", requireAdmin, async (req, res) => {
+    try {
+      const tours = await storage.getTours();
+      res.json(tours);
+    } catch (error) {
+      console.error('Error fetching admin tours:', error);
+      res.status(500).json({ error: 'Failed to fetch tours' });
+    }
+  });
+
   app.post("/api/admin/tours", requireAdmin, async (req, res) => {
     try {
       const tour = await storage.createTour(req.body);
@@ -712,6 +722,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Accommodations CRUD
+  app.get("/api/admin/accommodations", requireAdmin, async (req, res) => {
+    try {
+      const accommodations = await storage.getAccommodations();
+      res.json(accommodations);
+    } catch (error) {
+      console.error('Error fetching admin accommodations:', error);
+      res.status(500).json({ error: 'Failed to fetch accommodations' });
+    }
+  });
+
   app.post("/api/admin/accommodations", requireAdmin, async (req, res) => {
     try {
       const accommodation = await storage.createAccommodation(req.body);
