@@ -27,7 +27,7 @@ function Router() {
       <Route path="/hotel-booking" component={HotelBookingPage} />
       <Route path="/tour-booking" component={TourBookingPage} />
       <Route path="/boat-tickets" component={BoatTicketsPage} />
-      <Route path="/admin" component={AdminPage} />
+      <Route path="/naane" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

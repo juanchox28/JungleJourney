@@ -30,7 +30,7 @@ export default function AdminPage() {
    // Update accommodation mutation (missing from current code)
    const updateAccommodationMutation = useMutation({
      mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
-       const response = await fetch(`/api/admin/accommodations/${id}`, {
+       const response = await fetch(`/api/naane/accommodations/${id}`, {
          method: "PUT",
          headers: {
            "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function AdminPage() {
 
    const deleteAccommodationMutation = useMutation({
      mutationFn: async (id: string) => {
-       const response = await fetch(`/api/admin/accommodations/${id}`, {
+       const response = await fetch(`/api/naane/accommodations/${id}`, {
          method: "DELETE",
        });
        if (!response.ok) throw new Error("Failed to delete accommodation");
@@ -103,7 +103,7 @@ export default function AdminPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/bookings");
+      const response = await fetch("/api/naane/bookings");
       if (!response.ok) throw new Error("Failed to fetch bookings");
       return response.json() as Promise<Booking[]>;
     },
@@ -113,7 +113,7 @@ export default function AdminPage() {
   // Mutations
   const createTourMutation = useMutation({
     mutationFn: async (tourData: any) => {
-      const response = await fetch("/api/admin/tours", {
+      const response = await fetch("/api/naane/tours", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +133,7 @@ export default function AdminPage() {
 
   const updateTourMutation = useMutation({
     mutationFn: async ({ id, tourData }: { id: string; tourData: any }) => {
-      const response = await fetch(`/api/admin/tours/${id}`, {
+      const response = await fetch(`/api/naane/tours/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export default function AdminPage() {
 
   const deleteTourMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/admin/tours/${id}`, {
+      const response = await fetch(`/api/naane/tours/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete tour");
@@ -168,7 +168,7 @@ export default function AdminPage() {
 
   const createAccommodationMutation = useMutation({
     mutationFn: async (accommodationData: any) => {
-      const response = await fetch("/api/admin/accommodations", {
+      const response = await fetch("/api/naane/accommodations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -188,7 +188,7 @@ export default function AdminPage() {
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const response = await fetch(`/api/admin/bookings/${id}`, {
+      const response = await fetch(`/api/naane/bookings/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
