@@ -107,8 +107,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/version", (req, res) => {
     try {
       const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
-      const gitCommit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-      const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+      let gitCommit = 'N/A';
+      let gitBranch = 'N/A';
+
+      try {
+        gitCommit = execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+        gitBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+      } catch (gitError) {
+        console.warn('Could not get git info:', gitError);
+      }
 
       res.json({
         version: packageJson.version,
