@@ -1,7 +1,5 @@
 import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
 import { randomUUID } from "crypto";
-import toursJsonData from "../attached_assets/tours_data.json";
-import accommodationsJsonData from "../attached_assets/accommodations_data.json";
 import fs from "fs/promises";
 import path from "path";
 
@@ -56,10 +54,18 @@ export class MemStorage implements IStorage {
     this.tours = new Map();
     this.accommodations = new Map();
     this.bookings = new Map();
-    this.toursFilePath = path.join(process.cwd(), "attached_assets", "tours_data.json");
-    this.accommodationsFilePath = path.join(process.cwd(), "attached_assets", "accommodations_data.json");
-    this.initializeTours();
-    this.initializeAccommodations();
+
+    const dataDir = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'public')
+      : path.join(process.cwd(), 'client', 'public');
+
+    this.toursFilePath = path.join(dataDir, "tours_data.json");
+    this.accommodationsFilePath = path.join(dataDir, "accommodations_data.json");
+  }
+
+  public async init() {
+    await this.initializeTours();
+    await this.initializeAccommodations();
   }
 
   private async persistTours(): Promise<void> {
@@ -72,46 +78,58 @@ export class MemStorage implements IStorage {
     await fs.writeFile(this.accommodationsFilePath, JSON.stringify(accommodationsArray, null, 2));
   }
 
-  private initializeTours() {
-    const rawTours = toursJsonData as any[];
-    
-    rawTours.forEach((rawTour) => {
-      if (!rawTour.name || rawTour.name.trim() === '') return;
-      if (rawTour.category === '' && rawTour.description === '') return;
+  private async initializeTours() {
+    try {
+      const toursData = await fs.readFile(this.toursFilePath, "utf-8");
+      const rawTours = JSON.parse(toursData) as any[];
+
+      rawTours.forEach((rawTour) => {
+        if (!rawTour.name || rawTour.name.trim() === '') return;
+        if (rawTour.category === '' && rawTour.description === '') return;
+
+        const id = rawTour.id || randomUUID();
+        const tour: Tour = {
+          id,
+          name: rawTour.name || '',
+          category: rawTour.category || '',
+          description: rawTour.description || '',
+          detalle: rawTour.detalle || '',
+          duration: rawTour.duration || '',
+          location: parseLocation(rawTour.location),
+          price2: cleanPrice(rawTour.price_2),
+          price3: cleanPrice(rawTour.price_3),
+          price4: cleanPrice(rawTour.price_4),
+          price5: cleanPrice(rawTour.price_5),
+          price6: cleanPrice(rawTour.price_6),
+          basePrice: cleanPrice(rawTour.base_price),
+          ref: rawTour.ref || '',
+          images: rawTour.images || '',
+        };
+
+        this.tours.set(id, tour);
+      });
       
-      const id = randomUUID();
-      const tour: Tour = {
-        id,
-        name: rawTour.name || '',
-        category: rawTour.category || '',
-        description: rawTour.description || '',
-        detalle: rawTour.detalle || '',
-        duration: rawTour.duration || '',
-        location: parseLocation(rawTour.location),
-        price2: cleanPrice(rawTour.price_2),
-        price3: cleanPrice(rawTour.price_3),
-        price4: cleanPrice(rawTour.price_4),
-        price5: cleanPrice(rawTour.price_5),
-        price6: cleanPrice(rawTour.price_6),
-        basePrice: cleanPrice(rawTour.base_price),
-        ref: rawTour.ref || '',
-        images: rawTour.images || '',
-      };
-      
-      this.tours.set(id, tour);
-    });
-    
-    console.log(`Initialized ${this.tours.size} tours in memory storage`);
+      console.log(`Initialized ${this.tours.size} tours in memory storage from ${this.toursFilePath}`);
+    } catch (error) {
+      console.error(`Error reading or parsing tours data from ${this.toursFilePath}:`, error);
+    }
   }
 
-  private initializeAccommodations() {
-    const rawAccommodations = accommodationsJsonData as any[];
+  private async initializeAccommodations() {
+    try {
+      const accommodationsData = await fs.readFile(this.accommodationsFilePath, "utf-8");
+      const rawAccommodations = JSON.parse(accommodationsData) as any[];
 
-    rawAccommodations.forEach((accommodation) => {
-      this.accommodations.set(accommodation.id, accommodation as Accommodation);
-    });
+      rawAccommodations.forEach((accommodation) => {
+        if (accommodation.id) {
+          this.accommodations.set(accommodation.id, accommodation as Accommodation);
+        }
+      });
 
-    console.log(`Initialized ${this.accommodations.size} accommodations in memory storage`);
+      console.log(`Initialized ${this.accommodations.size} accommodations in memory storage from ${this.accommodationsFilePath}`);
+    } catch (error) {
+      console.error(`Error reading or parsing accommodations data from ${this.accommodationsFilePath}:`, error);
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {

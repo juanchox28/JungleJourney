@@ -16,88 +16,62 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
-   const [password, setPassword] = useState("");
-   const [isAuthenticated, setIsAuthenticated] = useState(false);
-   const [activeTab, setActiveTab] = useState("tours");
+    const [isAuthenticated, setIsAuthenticated] = useState(true); // No authentication required
+    const [activeTab, setActiveTab] = useState("tours");
 
-   console.log("🔍 AdminPage render - isAuthenticated:", isAuthenticated);
-  const [editingTour, setEditingTour] = useState<Tour | null>(null);
-  const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
-  const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
-  const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
-  const [deletingTourId, setDeletingTourId] = useState<string | null>(null);
-  const [deletingAccommodationId, setDeletingAccommodationId] = useState<string | null>(null);
+    console.log("🔍 AdminPage render - isAuthenticated:", isAuthenticated);
+   const [editingTour, setEditingTour] = useState<Tour | null>(null);
+   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
+   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
+   const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
+   const [deletingTourId, setDeletingTourId] = useState<string | null>(null);
+   const [deletingAccommodationId, setDeletingAccommodationId] = useState<string | null>(null);
 
-  // Update accommodation mutation (missing from current code)
-  const updateAccommodationMutation = useMutation({
-    mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
-      const response = await fetch(`/api/admin/accommodations/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(accommodationData),
-      });
-      if (!response.ok) throw new Error("Failed to update accommodation");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
-      setIsAccommodationDialogOpen(false);
-      setEditingAccommodation(null);
-      toast({ title: "Success", description: "Accommodation updated successfully" });
-    },
-  });
-
-  const deleteAccommodationMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/admin/accommodations/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete accommodation");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
-      setDeletingAccommodationId(null);
-      toast({ title: "Success", description: "Accommodation deleted successfully" });
-    },
-  });
-
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Authentication
-   const handleLogin = async (e?: React.FormEvent) => {
-     if (e) e.preventDefault();
-     console.log("🔐 Attempting admin login...");
-     try {
-       const response = await fetch("/api/admin/login", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ password }),
+   // Update accommodation mutation (missing from current code)
+   const updateAccommodationMutation = useMutation({
+     mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
+       const response = await fetch(`/api/naane/accommodations/${id}`, {
+         method: "PUT",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify(accommodationData),
        });
-       console.log("🔐 Login response status:", response.status);
-       if (response.ok) {
-         console.log("✅ Admin login successful");
-         setIsAuthenticated(true);
-       } else {
-         console.log("❌ Admin login failed - invalid password");
-         toast({
-           title: "Error",
-           description: "Invalid password",
-           variant: "destructive",
-         });
-       }
-     } catch (error) {
-       console.log("❌ Admin login error:", error);
-       toast({
-         title: "Error",
-         description: "An unexpected error occurred",
-         variant: "destructive",
+       if (!response.ok) throw new Error("Failed to update accommodation");
+       return response.json();
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+       setIsAccommodationDialogOpen(false);
+       setEditingAccommodation(null);
+       toast({ title: "Success", description: "Accommodation updated successfully" });
+     },
+   });
+
+   const deleteAccommodationMutation = useMutation({
+     mutationFn: async (id: string) => {
+       const response = await fetch(`/api/naane/accommodations/${id}`, {
+         method: "DELETE",
        });
-     }
-   };
+       if (!response.ok) throw new Error("Failed to delete accommodation");
+       return response.json();
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+       setDeletingAccommodationId(null);
+       toast({ title: "Success", description: "Accommodation deleted successfully" });
+     },
+   });
+
+   const { toast } = useToast();
+   const queryClient = useQueryClient();
+
+   // Authentication - bypassed
+    const handleLogin = async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      console.log("🔓 Admin login bypassed - no authentication required");
+      setIsAuthenticated(true);
+    };
 
   // Data fetching
    const { data: tours = [] } = useQuery({
@@ -129,7 +103,7 @@ export default function AdminPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/bookings");
+      const response = await fetch("/api/naane/bookings");
       if (!response.ok) throw new Error("Failed to fetch bookings");
       return response.json() as Promise<Booking[]>;
     },
@@ -139,7 +113,7 @@ export default function AdminPage() {
   // Mutations
   const createTourMutation = useMutation({
     mutationFn: async (tourData: any) => {
-      const response = await fetch("/api/admin/tours", {
+      const response = await fetch("/api/naane/tours", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,7 +133,7 @@ export default function AdminPage() {
 
   const updateTourMutation = useMutation({
     mutationFn: async ({ id, tourData }: { id: string; tourData: any }) => {
-      const response = await fetch(`/api/admin/tours/${id}`, {
+      const response = await fetch(`/api/naane/tours/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +153,7 @@ export default function AdminPage() {
 
   const deleteTourMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/admin/tours/${id}`, {
+      const response = await fetch(`/api/naane/tours/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete tour");
@@ -194,7 +168,7 @@ export default function AdminPage() {
 
   const createAccommodationMutation = useMutation({
     mutationFn: async (accommodationData: any) => {
-      const response = await fetch("/api/admin/accommodations", {
+      const response = await fetch("/api/naane/accommodations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -214,7 +188,7 @@ export default function AdminPage() {
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const response = await fetch(`/api/admin/bookings/${id}`, {
+      const response = await fetch(`/api/naane/bookings/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -238,35 +212,7 @@ export default function AdminPage() {
     }).format(parseInt(price) || 0);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Admin Access</CardTitle>
-            <CardDescription>Enter the admin password to access the management interface</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // No authentication required - directly show admin interface
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
@@ -282,22 +228,7 @@ export default function AdminPage() {
               <span>/</span>
               <span className="text-gray-900 font-medium">Admin Dashboard</span>
             </div>
-            {isAuthenticated && (
-              <div className="flex items-center space-x-4">
-                <a
-                  href="/api/auth/github"
-                  className="text-sm text-blue-600 hover:text-blue-800 underline"
-                >
-                  Login with GitHub
-                </a>
-                <button
-                  onClick={() => fetch('/api/auth/logout')}
-                  className="text-sm text-red-600 hover:text-red-800 underline"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            {/* No authentication - no logout needed */}
           </nav>
         </div>
       </div>

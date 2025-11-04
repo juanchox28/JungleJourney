@@ -107,8 +107,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/version", (req, res) => {
     try {
       const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
-      const gitCommit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-      const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+      let gitCommit = 'N/A';
+      let gitBranch = 'N/A';
+
+      try {
+        gitCommit = execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+        gitBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+      } catch (gitError) {
+        console.warn('Could not get git info:', gitError);
+      }
 
       res.json({
         version: packageJson.version,
@@ -274,9 +281,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
-  // -------------------- ADMIN ACCOMMODATION CRUD --------------------
-  // Note: These routes are defined after requireAdmin is declared below
 
   // -------------------- WOMPI PAYMENT INTEGRATION --------------------
   app.post("/api/create-accommodation-booking", async (req, res) => {
@@ -654,82 +658,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err) {
         return next(err);
       }
-      res.redirect('/admin');
+      res.redirect('/naane');
     });
   });
 
-  // Admin routes - password protection as fallback
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-
-  app.post("/api/admin/login", (req, res) => {
-    console.log("🔐 Server: Admin login attempt");
-    const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (!adminPassword || typeof adminPassword !== 'string' || adminPassword.length === 0) {
-      console.error("❌ ADMIN_PASSWORD is not set or is empty. Cannot log in.");
-      return res.status(401).json({ success: false, error: "Invalid credentials" });
-    }
-
-    console.log("🔑 Provided password:", password ? "***" : "empty");
-
-    if (password === adminPassword) {
-      console.log("✅ Server: Admin login successful");
-      (req.session as any).isAdmin = true;
-      req.session.save((err) => {
-        if (err) {
-          console.error("Error saving session:", err);
-          return res.status(500).json({ success: false, error: "Error saving session" });
-        }
-        res.json({ success: true });
-      });
-    } else {
-      console.log("❌ Server: Admin login failed - invalid password");
-      res.status(401).json({ success: false, error: "Invalid credentials" });
-    }
+  // Admin routes - no authentication required
+  app.post("/api/naane/login", (req, res) => {
+    console.log("🔓 Server: Admin login bypassed - no authentication required");
+    (req.session as any).isAdmin = true;
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error saving session:", err);
+        return res.status(500).json({ success: false, error: "Error saving session" });
+      }
+      res.json({ success: true });
+    });
   });
 
   const requireAdmin = (req: any, res: any, next: any) => {
-    console.log("🔒 Server: Checking admin authentication");
-    if ((req.session as any).isAdmin) {
-      console.log("✅ Server: Admin authenticated");
-      next();
-    } else {
-      console.log("❌ Server: Admin not authenticated");
-      res.status(401).json({ error: 'Unauthorized' });
-    }
+    console.log("🔓 Server: Admin access - no authentication required");
+    next();
   };
 
-  // -------------------- ADMIN ACCOMMODATION CRUD --------------------
-  app.put("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const accommodationData = req.body;
-
-      // For in-memory storage, we'll recreate the accommodation
-      const updatedAccommodation = { ...accommodationData, id };
-      // Note: In a real database, you'd update the existing record
-
-      res.json(updatedAccommodation);
-    } catch (error) {
-      console.error('Error updating accommodation:', error);
-      res.status(500).json({ error: 'Failed to update accommodation' });
-    }
-  });
-
-  app.delete("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      // For in-memory storage, we'd remove from the map
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting accommodation:', error);
-      res.status(500).json({ error: 'Failed to delete accommodation' });
-    }
-  });
 
   // Tours CRUD
-  app.post("/api/admin/tours", requireAdmin, async (req, res) => {
+  app.get("/api/naane/tours", requireAdmin, async (req, res) => {
+    try {
+      const tours = await storage.getTours();
+      res.json(tours);
+    } catch (error) {
+      console.error('Error fetching admin tours:', error);
+      res.status(500).json({ error: 'Failed to fetch tours' });
+    }
+  });
+
+  app.post("/api/naane/tours", requireAdmin, async (req, res) => {
     try {
       const tour = await storage.createTour(req.body);
       res.status(201).json(tour);
@@ -739,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/tours/:id", requireAdmin, async (req, res) => {
     try {
       const tour = await storage.updateTour(req.params.id, req.body);
       if (!tour) {
@@ -752,7 +715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/tours/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/naane/tours/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteTour(req.params.id);
       if (!success) {
@@ -766,7 +729,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Accommodations CRUD
-  app.post("/api/admin/accommodations", requireAdmin, async (req, res) => {
+  app.get("/api/naane/accommodations", requireAdmin, async (req, res) => {
+    try {
+      const accommodations = await storage.getAccommodations();
+      res.json(accommodations);
+    } catch (error) {
+      console.error('Error fetching admin accommodations:', error);
+      res.status(500).json({ error: 'Failed to fetch accommodations' });
+    }
+  });
+
+  app.post("/api/naane/accommodations", requireAdmin, async (req, res) => {
     try {
       const accommodation = await storage.createAccommodation(req.body);
       res.status(201).json(accommodation);
@@ -776,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/accommodations/:id", requireAdmin, async (req, res) => {
     try {
       const accommodation = await storage.updateAccommodation(req.params.id, req.body);
       if (!accommodation) {
@@ -789,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/accommodations/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/naane/accommodations/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteAccommodation(req.params.id);
       if (!success) {
@@ -803,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bookings management
-  app.get("/api/admin/bookings", requireAdmin, async (req, res) => {
+  app.get("/api/naane/bookings", requireAdmin, async (req, res) => {
     try {
       const bookings = await storage.getBookings();
       res.json(bookings);
@@ -813,7 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/bookings/:id", requireAdmin, async (req, res) => {
+  app.put("/api/naane/bookings/:id", requireAdmin, async (req, res) => {
     try {
       const updatedBooking = { ...req.body, id: req.params.id };
       res.json(updatedBooking);
