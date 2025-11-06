@@ -55,17 +55,15 @@ export class MemStorage implements IStorage {
     this.accommodations = new Map();
     this.bookings = new Map();
 
-    const dataDir = process.env.NODE_ENV === 'production'
-      ? path.join(process.cwd(), 'dist', 'public')
-      : path.join(process.cwd(), 'client', 'public');
+    // Use server directory for data files in production, client/public in development
+    const isProduction = process.env.NODE_ENV === 'production';
+    const dataDir = isProduction ? 'server' : 'client/public';
 
-    this.toursFilePath = path.join(dataDir, "tours_data.json");
-    this.accommodationsFilePath = path.join(dataDir, "accommodations_data.json");
-  }
+    this.toursFilePath = path.join(process.cwd(), dataDir, "tours_data.json");
+    this.accommodationsFilePath = path.join(process.cwd(), dataDir, "accommodations_data.json");
 
-  public async init() {
-    await this.initializeTours();
-    await this.initializeAccommodations();
+    this.initializeTours();
+    this.initializeAccommodations();
   }
 
   private async persistTours(): Promise<void> {
