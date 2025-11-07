@@ -61,9 +61,12 @@ export class MemStorage implements IStorage {
 
     this.toursFilePath = path.join(process.cwd(), dataDir, "tours_data.json");
     this.accommodationsFilePath = path.join(process.cwd(), dataDir, "accommodations_data.json");
+  }
 
-    this.initializeTours();
-    this.initializeAccommodations();
+  async init() {
+    await this.initializeTours();
+    await this.initializeAccommodations();
+    console.log('✅ Storage initialized');
   }
 
   private async persistTours(): Promise<void> {
@@ -78,8 +81,12 @@ export class MemStorage implements IStorage {
 
   private async initializeTours() {
     try {
+      console.log(`📂 Attempting to load tours from: ${this.toursFilePath}`);
       const toursData = await fs.readFile(this.toursFilePath, "utf-8");
+      console.log(`✅ Successfully read tours file`);
+      
       const rawTours = JSON.parse(toursData) as any[];
+      console.log(`📋 Found ${rawTours.length} raw tours`);
 
       rawTours.forEach((rawTour) => {
         if (!rawTour.name || rawTour.name.trim() === '') return;
@@ -107,9 +114,15 @@ export class MemStorage implements IStorage {
         this.tours.set(id, tour);
       });
       
-      console.log(`Initialized ${this.tours.size} tours in memory storage from ${this.toursFilePath}`);
+      console.log(`✅ Initialized ${this.tours.size} tours in memory storage from ${this.toursFilePath}`);
     } catch (error) {
-      console.error(`Error reading or parsing tours data from ${this.toursFilePath}:`, error);
+      console.error(`❌ Error reading or parsing tours data from ${this.toursFilePath}:`, error);
+      console.error(`Full error details:`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        code: (error as any).code,
+        path: this.toursFilePath
+      });
     }
   }
 
