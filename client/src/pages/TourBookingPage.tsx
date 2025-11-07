@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Home, Calendar, Users, MapPin, Clock, Star } from "lucide-react";
+import { Home, Calendar, Users, MapPin, Clock, Star, Minus, Plus } from "lucide-react";
 import { Tour } from "@shared/schema";
 import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
 
@@ -225,15 +225,25 @@ export default function TourBookingPage() {
 
                   <div>
                     <Label htmlFor="participants">Number of Participants *</Label>
-                    <Input
-                      id="participants"
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={participantCount}
-                      onChange={(e) => setParticipantCount(parseInt(e.target.value) || 1)}
-                      required
-                    />
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setParticipantCount(Math.max(1, participantCount - 1))}
+                        disabled={participantCount <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-lg font-medium">{participantCount}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setParticipantCount(Math.min(20, participantCount + 1))}
+                        disabled={participantCount >= 20}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

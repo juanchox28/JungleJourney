@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, MapPin, Clock, Users, Calendar, ArrowRight } from "lucide-react";
+import { Home, MapPin, Clock, Users, Calendar, ArrowRight, Minus, Plus } from "lucide-react";
 
 const boatRoutes = [
   {
@@ -224,14 +224,25 @@ export default function BoatTicketsPage() {
                 {/* Passenger Count */}
                 <div>
                   <Label htmlFor="passengers">Number of Passengers</Label>
-                  <Input
-                    id="passengers"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={passengerCount}
-                    onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPassengerCount(Math.max(1, passengerCount - 1))}
+                      disabled={passengerCount <= 1}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-lg font-semibold min-w-[2rem] text-center">{passengerCount}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPassengerCount(Math.min(20, passengerCount + 1))}
+                      disabled={passengerCount >= 20}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Route Info */}

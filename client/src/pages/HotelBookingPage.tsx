@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Calendar, Users, MapPin, Wifi, Coffee, Car } from "lucide-react";
+import { Home, Calendar, Users, MapPin, Wifi, Coffee, Car, Minus, Plus } from "lucide-react";
 
 interface Room {
   id: string;
@@ -553,15 +553,27 @@ export default function HotelBookingPage() {
               </div>
               <div>
                 <Label htmlFor="guests">Número de Huéspedes</Label>
-                <Input
-                  id="guests"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={totalGuests}
-                  onChange={(e) => setTotalGuests(parseInt(e.target.value) || 1)}
-                  required
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTotalGuests(Math.max(1, totalGuests - 1))}
+                    disabled={totalGuests <= 1}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <span className="w-8 text-center font-medium">{totalGuests}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTotalGuests(Math.min(20, totalGuests + 1))}
+                    disabled={totalGuests >= 20}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div className="flex items-end">
                 <Button type="submit" className="w-full">
