@@ -109,6 +109,7 @@ export class MemStorage implements IStorage {
           basePrice: cleanPrice(rawTour.base_price),
           ref: rawTour.ref || '',
           images: rawTour.images || '',
+          bookingAdvanceHours: rawTour.booking_advance_hours || 24,
         };
 
         this.tours.set(id, tour);
@@ -196,6 +197,7 @@ export class MemStorage implements IStorage {
       basePrice: insertTour.basePrice ?? null,
       ref: insertTour.ref ?? null,
       images: insertTour.images ?? null,
+      bookingAdvanceHours: insertTour.bookingAdvanceHours ?? 24,
     };
     this.tours.set(id, tour);
     await this.persistTours();

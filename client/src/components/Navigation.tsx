@@ -1,13 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, User, Moon, Sun, Languages } from "lucide-react";
+import { Leaf, Menu, User, Moon, Sun, Languages, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import type { Tour } from "@shared/schema";
 
 interface NavigationProps {
   transparent?: boolean;
@@ -23,9 +27,23 @@ const languages = [
 ];
 
 export default function Navigation({ transparent = false, onMenuClick }: NavigationProps) {
+  const { t, i18n } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [currentLang, setCurrentLang] = useState('es');
+
+  // Fetch tours for location dropdown
+  const { data: tours = [] } = useQuery({
+    queryKey: ["tours"],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/tours`);
+      if (!response.ok) throw new Error("Failed to fetch tours");
+      return response.json() as Promise<Tour[]>;
+    },
+  });
+
+  // Get unique locations from tours
+  const locations = Array.from(new Set(tours.map(tour => tour.location).filter(Boolean))).sort();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,27 +101,56 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
               href="/hotel-booking"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
             >
-              Hotel Booking
+              {t('nav.accommodations')}
             </Link>
-            <Link
-              href="/tour-booking"
-              className={`${textClass} hover:text-primary transition-colors font-medium`}
-            >
-              Tour Booking
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`${textClass} hover:text-primary transition-colors font-medium flex items-center gap-1`}
+                >
+                  {t('nav.tours')}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuItem asChild>
+                  <Link href="/tours" className="w-full">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Ver Todos los Tours
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {locations.map((location) => {
+                  const locationTours = tours.filter(tour => tour.location === location);
+                  return (
+                    <DropdownMenuItem key={location} asChild>
+                      <Link href={`/tours?location=${location}`} className="w-full">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        {location === 'leticia' ? 'Leticia' : location === 'puerto-narino' ? 'Puerto Nariño' : location === 'mocagua' ? 'Mocagua' : location}
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          ({locationTours.length})
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button
               data-testid="link-about"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
               onClick={() => console.log('Navigate to about')}
             >
-              About
+              {t('nav.about')}
             </button>
             <button
               data-testid="link-contact"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
               onClick={() => console.log('Navigate to contact')}
             >
-              Contact
+              {t('nav.contact')}
             </button>
           </div>
 
@@ -126,10 +173,8 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
                     data-testid={`language-${lang.code}`}
                     onClick={() => {
                       setCurrentLang(lang.code);
+                      i18n.changeLanguage(lang.code);
                       console.log('Language changed to:', lang.code);
-                      // TODO: Implement actual language switching logic
-                      // This would typically update the app's language context/state
-                      // and reload content in the selected language
                     }}
                     className={currentLang === lang.code ? 'bg-accent' : ''}
                   >

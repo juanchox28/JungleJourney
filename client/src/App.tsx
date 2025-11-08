@@ -24,6 +24,7 @@ function Router() {
       <Route path="/tour/:id" component={TourDetailPage} />
       <Route path="/accommodations" component={AccommodationsPage} />
       <Route path="/accommodation/:id" component={AccommodationDetailPage} />
+      <Route path="/reservar" component={HotelBookingPage} />
       <Route path="/hotel-booking" component={HotelBookingPage} />
       <Route path="/tour-booking" component={TourBookingPage} />
       <Route path="/boat-tickets" component={BoatTicketsPage} />

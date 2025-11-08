@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import HeroSection from "@/components/HeroSection";
 import TourCard from "@/components/TourCard";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const getImageForTour = (tour: Tour, index: number) => {
 };
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [selectedLocation, setSelectedLocation] = useState("");
 
@@ -112,13 +114,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Users className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">Reserva de Hotel</h3>
+                      <h3 className="text-xl font-bold mb-2 text-white">{t('hero.title')}</h3>
                       <p className="mb-4 text-white/90 text-sm font-medium">
-                        Alojamientos unicos del Amazonas
+                        {t('hero.subtitle')}
                       </p>
-                      <Link href="/hotel-booking">
+                      <Link href="/reservar">
                         <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
-                          Reservar Hotel
+                          {t('hero.cta.secondary')}
                         </Button>
                       </Link>
                     </CardContent>
@@ -130,13 +132,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">Tiquetes de Barco</h3>
+                      <h3 className="text-xl font-bold mb-2 text-white">{t('tours.title')}</h3>
                       <p className="mb-4 text-white/90 text-sm font-medium">
-                        Reserva transporte fluvial seguro y confiable
+                        {t('tours.subtitle')}
                       </p>
                       <Link href="/boat-tickets">
                         <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
-                          Reservar Tiquetes
+                          {t('tours.book')}
                         </Button>
                       </Link>
                     </CardContent>
@@ -172,7 +174,7 @@ export default function HomePage() {
                   size="lg"
                 >
                   <Search className="w-5 h-5" />
-                  Explorar Tours
+                  {t('hero.cta')}
                 </Button>
               </div>
             </div>

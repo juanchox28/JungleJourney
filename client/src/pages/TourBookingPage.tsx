@@ -38,8 +38,20 @@ export default function TourBookingPage() {
     e.preventDefault();
 
     if (!selectedTour || !tourDate || !guestName || !guestEmail) {
-      alert("Please fill in all required fields");
+      alert("Por favor completa todos los campos requeridos");
       return;
+    }
+
+    // Check booking advance time requirement
+    if (selectedTour.bookingAdvanceHours) {
+      const selectedDateTime = new Date(tourDate);
+      const now = new Date();
+      const hoursDifference = (selectedDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (hoursDifference < selectedTour.bookingAdvanceHours) {
+        alert(`Este tour requiere reserva con ${selectedTour.bookingAdvanceHours} horas de anticipación. Por favor selecciona una fecha posterior.`);
+        return;
+      }
     }
 
     const totalPrice = calculateTourPrice();
@@ -66,11 +78,11 @@ export default function TourBookingPage() {
         // Redirect to Wompi payment page
         window.location.href = data.checkout_url;
       } else {
-        alert('Error creating booking: ' + (data.error || 'Unknown error'));
+        alert('Error creando reserva: ' + (data.error || 'Error desconocido'));
       }
     } catch (error) {
-      console.error('Booking error:', error);
-      alert('Error creating booking. Please try again.');
+      console.error('Error de reserva:', error);
+      alert('Error creando reserva. Por favor intenta nuevamente.');
     }
   };
 

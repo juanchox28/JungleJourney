@@ -33,6 +33,7 @@ export const tours = pgTable("tours", {
   basePrice: text("base_price"),
   ref: text("ref"),
   images: text("images"),
+  bookingAdvanceHours: integer("booking_advance_hours").default(24), // Hours required in advance for booking
 });
 
 export const insertTourSchema = createInsertSchema(tours).omit({

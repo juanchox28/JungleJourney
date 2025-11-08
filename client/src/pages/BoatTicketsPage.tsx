@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,45 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Home, MapPin, Clock, Users, Calendar, ArrowRight, Minus, Plus } from "lucide-react";
-
-const boatRoutes = [
-  {
-    id: "leticia-puerto-narino",
-    from: "Leticia",
-    to: "Puerto Nariño",
-    duration: "2 hours",
-    price: 90000,
-    schedule: ["7:00 AM", "9:00 AM", "12:00 PM", "2:00 PM"],
-    description: "Scenic river journey through the Amazon"
-  },
-  {
-    id: "puerto-narino-leticia",
-    from: "Puerto Nariño",
-    to: "Leticia",
-    duration: "2 hours",
-    price: 90000,
-    schedule: ["8:00 AM", "10:00 AM", "1:00 PM", "3:00 PM"],
-    description: "Return journey with river views"
-  },
-  {
-    id: "leticia-mocagua",
-    from: "Leticia",
-    to: "Mocagua",
-    duration: "3 hours",
-    price: 120000,
-    schedule: ["6:00 AM", "11:00 AM"],
-    description: "Extended journey to the wildlife sanctuary"
-  },
-  {
-    id: "mocagua-leticia",
-    from: "Mocagua",
-    to: "Leticia",
-    duration: "3 hours",
-    price: 120000,
-    schedule: ["7:00 AM", "12:00 PM"],
-    description: "Return from the primate sanctuary"
-  }
-];
+import type { Tour } from "@shared/schema";
+import { getApiUrl } from "@/lib/utils";
 
 export default function BoatTicketsPage() {
   const [selectedRoute, setSelectedRoute] = useState<string>("");
@@ -53,12 +17,25 @@ export default function BoatTicketsPage() {
   const [passengerCount, setPassengerCount] = useState(1);
   const [travelDate, setTravelDate] = useState("");
 
-  const selectedRouteData = boatRoutes.find(route => route.id === selectedRoute);
-  const availableTimes = selectedRouteData?.schedule || [];
+  // Fetch transfer routes from API
+  const { data: transferRoutes = [] } = useQuery<Tour[]>({
+    queryKey: ['/api/tours'],
+    queryFn: async () => {
+      const response = await fetch(getApiUrl('/api/tours'));
+      if (!response.ok) throw new Error('Failed to fetch tours');
+      const tours = await response.json();
+      // Filter only transfer routes
+      return tours.filter((tour: Tour) => tour.category === 'Traslados');
+    },
+  });
+
+  const selectedRouteData = transferRoutes.find(route => route.id === selectedRoute);
+  const availableTimes = selectedRouteData?.description?.match(/\d{1,2}:\d{2}\s*(?:hs|AM|PM)/g) || [];
 
   const calculateTotal = () => {
     if (!selectedRouteData) return 0;
-    return selectedRouteData.price * passengerCount;
+    const basePrice = parseInt(selectedRouteData.basePrice || "0");
+    return basePrice * passengerCount;
   };
 
   const formatPrice = (price: number) => {
@@ -69,15 +46,57 @@ export default function BoatTicketsPage() {
     }).format(price);
   };
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedRoute || !selectedTime || !travelDate) {
-      alert("Please fill in all required fields");
+      alert("Por favor completa todos los campos requeridos");
       return;
     }
 
-    // For now, just show a success message
-    // In a real implementation, this would integrate with payment
-    alert(`Boat ticket booked successfully!\nRoute: ${selectedRouteData?.from} → ${selectedRouteData?.to}\nTime: ${selectedTime}\nDate: ${travelDate}\nPassengers: ${passengerCount}\nTotal: ${formatPrice(calculateTotal())}`);
+    // Check booking advance time requirement
+    if (selectedRouteData?.bookingAdvanceHours) {
+      const selectedDateTime = new Date(`${travelDate}T${selectedTime}`);
+      const now = new Date();
+      const hoursDifference = (selectedDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (hoursDifference < selectedRouteData.bookingAdvanceHours) {
+        alert(`Este traslado requiere reserva con ${selectedRouteData.bookingAdvanceHours} horas de anticipación. Por favor selecciona una fecha/hora posterior.`);
+        return;
+      }
+    }
+
+    const totalPrice = calculateTotal();
+
+    // Create booking data
+    const bookingData = {
+      guestName: "Cliente", // For now, use a default name
+      guestEmail: "cliente@example.com", // For now, use a default email
+      guestCount: passengerCount,
+      tourDate: travelDate,
+      tourId: selectedRoute,
+      totalPrice,
+    };
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-tour-booking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const data = await response.json();
+
+      if (data.ok && data.checkout_url) {
+        // Redirect to Wompi payment page
+        window.location.href = data.checkout_url;
+      } else {
+        alert('Error creando reserva: ' + (data.error || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error de reserva:', error);
+      alert('Error creando reserva. Por favor intenta nuevamente.');
+    }
   };
 
   return (
@@ -91,7 +110,7 @@ export default function BoatTicketsPage() {
               Home
             </Link>
             <span>/</span>
-            <span className="text-gray-900 font-medium">River Boat Tickets</span>
+            <span className="text-gray-900 font-medium">Traslados Fluviales</span>
           </nav>
         </div>
       </div>
@@ -99,19 +118,19 @@ export default function BoatTicketsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            River Boat Tickets
+            Traslados Fluviales
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Travel between Amazon destinations with our comfortable river transportation
+            Viaja entre destinos amazónicos con nuestro cómodo transporte fluvial
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Routes Selection */}
           <div>
-            <h2 className="text-2xl font-bold mb-6">Available Routes</h2>
+            <h2 className="text-2xl font-bold mb-6">Rutas Disponibles</h2>
             <div className="space-y-4">
-              {boatRoutes.map((route) => (
+              {transferRoutes.map((route) => (
                 <Card
                   key={route.id}
                   className={`cursor-pointer transition-all ${
@@ -123,35 +142,35 @@ export default function BoatTicketsPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="font-semibold text-lg">{route.from}</div>
-                          <div className="text-sm text-gray-500">Departure</div>
+                          <div className="font-semibold text-lg">{route.name.split(' - ')[0] || route.name}</div>
+                          <div className="text-sm text-gray-500">Salida</div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-gray-400" />
                         <div className="text-center">
-                          <div className="font-semibold text-lg">{route.to}</div>
-                          <div className="text-sm text-gray-500">Arrival</div>
+                          <div className="font-semibold text-lg">{route.name.split(' - ')[1] || 'Destino'}</div>
+                          <div className="text-sm text-gray-500">Llegada</div>
                         </div>
                       </div>
                       <Badge variant="secondary" className="text-lg font-bold">
-                        {formatPrice(route.price)}
+                        {formatPrice(parseInt(route.basePrice || "0"))}
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-1" />
-                        {route.duration}
+                        {route.duration || "2 horas"}
                       </div>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        Multiple departures daily
+                        Múltiples salidas diarias
                       </div>
                     </div>
 
-                    <p className="text-gray-700 mb-3">{route.description}</p>
+                    <p className="text-gray-700 mb-3">{route.detalle || route.description}</p>
 
                     <div className="flex flex-wrap gap-2">
-                      {route.schedule.map((time) => (
+                      {availableTimes.map((time) => (
                         <Badge key={time} variant="outline" className="text-xs">
                           {time}
                         </Badge>
@@ -167,23 +186,23 @@ export default function BoatTicketsPage() {
           <div>
             <Card className="sticky top-4">
               <CardHeader>
-                <CardTitle>Book Your River Journey</CardTitle>
+                <CardTitle>Reserva Tu Viaje Fluvial</CardTitle>
                 <CardDescription>
-                  Select your travel details and complete your booking
+                  Selecciona tus detalles de viaje y completa tu reserva
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Route Selection */}
                 <div>
-                  <Label htmlFor="route">Select Route</Label>
+                  <Label htmlFor="route">Seleccionar Ruta</Label>
                   <Select value={selectedRoute} onValueChange={setSelectedRoute}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose your route" />
+                      <SelectValue placeholder="Elige tu ruta" />
                     </SelectTrigger>
                     <SelectContent>
-                      {boatRoutes.map((route) => (
+                      {transferRoutes.map((route) => (
                         <SelectItem key={route.id} value={route.id}>
-                          {route.from} → {route.to}
+                          {route.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -192,7 +211,7 @@ export default function BoatTicketsPage() {
 
                 {/* Travel Date */}
                 <div>
-                  <Label htmlFor="date">Travel Date</Label>
+                  <Label htmlFor="date">Fecha de Viaje</Label>
                   <Input
                     id="date"
                     type="date"
@@ -205,10 +224,10 @@ export default function BoatTicketsPage() {
                 {/* Departure Time */}
                 {selectedRoute && (
                   <div>
-                    <Label htmlFor="time">Departure Time</Label>
+                    <Label htmlFor="time">Hora de Salida</Label>
                     <Select value={selectedTime} onValueChange={setSelectedTime}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select departure time" />
+                        <SelectValue placeholder="Selecciona hora de salida" />
                       </SelectTrigger>
                       <SelectContent>
                         {availableTimes.map((time) => (
@@ -223,7 +242,7 @@ export default function BoatTicketsPage() {
 
                 {/* Passenger Count */}
                 <div>
-                  <Label htmlFor="passengers">Number of Passengers</Label>
+                  <Label htmlFor="passengers">Número de Pasajeros</Label>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -248,19 +267,19 @@ export default function BoatTicketsPage() {
                 {/* Route Info */}
                 {selectedRouteData && (
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Route Details</h4>
+                    <h4 className="font-semibold mb-2">Detalles de la Ruta</h4>
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex justify-between">
-                        <span>Route:</span>
-                        <span>{selectedRouteData.from} → {selectedRouteData.to}</span>
+                        <span>Ruta:</span>
+                        <span>{selectedRouteData.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Duration:</span>
+                        <span>Duración:</span>
                         <span>{selectedRouteData.duration}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Price per person:</span>
-                        <span>{formatPrice(selectedRouteData.price)}</span>
+                        <span>Precio por persona:</span>
+                        <span>{formatPrice(parseInt(selectedRouteData.basePrice || "0"))}</span>
                       </div>
                     </div>
                   </div>
@@ -274,7 +293,7 @@ export default function BoatTicketsPage() {
                       <span className="text-primary">{formatPrice(calculateTotal())}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      {passengerCount} passenger{passengerCount > 1 ? 's' : ''} × {formatPrice(selectedRouteData?.price || 0)}
+                      {passengerCount} pasajero{passengerCount > 1 ? 's' : ''} × {formatPrice(parseInt(selectedRouteData?.basePrice || "0"))}
                     </p>
                   </div>
                 )}
@@ -284,7 +303,7 @@ export default function BoatTicketsPage() {
                   className="w-full"
                   disabled={!selectedRoute || !travelDate || !selectedTime}
                 >
-                  Book River Boat Ticket
+                  Reservar Traslado Fluvial
                 </Button>
               </CardContent>
             </Card>

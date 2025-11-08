@@ -5,7 +5,7 @@ import FilterBar from "@/components/FilterBar";
 import TourCard from "@/components/TourCard";
 import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
-import { formatLocation, getPriceDisplay } from "@/lib/tourUtils";
+import { formatLocation, getPriceDisplay, formatDuration } from "@/lib/tourUtils";
 import { getApiUrl } from "@/lib/utils";
 import { Home } from "lucide-react";
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
@@ -91,7 +91,7 @@ export default function ToursPage() {
                 image={getImageForTour(tour, index)}
                 title={tour.name}
                 description={tour.detalle || tour.description || ''}
-                duration={tour.duration || 'Various'}
+                duration={formatDuration(tour.duration)}
                 difficulty="Moderate"
                 priceDisplay={getPriceDisplay(tour).text}
                 location={formatLocation(tour.location)}

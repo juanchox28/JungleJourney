@@ -361,8 +361,8 @@ export default function HotelBookingPage() {
       </div>
 
       {/* Reservation Details - Mobile: Bottom, Desktop: Right Sidebar */}
-      <div className="fixed bottom-0 left-0 right-0 md:right-0 md:top-0 md:h-full md:w-80 bg-white/95 backdrop-blur-sm border-t md:border-t-0 md:border-l border-gray-200 shadow-xl z-50 md:overflow-y-auto">
-        <div className="p-4 md:p-6 max-h-48 md:max-h-none overflow-y-auto" style={{maxHeight: '48vh'}}>
+      <div className="fixed bottom-0 left-0 right-0 md:right-4 md:top-24 md:h-auto md:w-80 bg-white/95 backdrop-blur-sm border-t md:border md:rounded-lg border-gray-200 shadow-xl z-40 md:overflow-y-auto max-h-48 md:max-h-96">
+        <div className="p-4 md:p-6 overflow-y-auto h-full">
           <h3 className="text-lg font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-primary" />
             Detalles de Reserva
@@ -489,21 +489,8 @@ export default function HotelBookingPage() {
         </div>
       </div>
 
-      {/* Navigation Breadcrumb */}
-      <div className="bg-white/80 backdrop-blur-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link href="/" className="flex items-center hover:text-primary transition-colors">
-              <Home className="w-4 h-4 mr-1" />
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">Hotel Booking</span>
-          </nav>
-        </div>
-      </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-80 md:pb-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pr-96 pb-80 md:pb-8 md:mr-4">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-lg">
@@ -609,7 +596,7 @@ export default function HotelBookingPage() {
                       <span className="text-2xl font-bold text-primary">
                         {formatPrice(room.price)}
                       </span>
-                      <span className="text-sm text-gray-600">por noche</span>
+                      <span className="text-sm text-gray-600">COP por noche</span>
                     </div>
                     <div className="flex items-center text-sm text-gray-600 mb-4">
                       <Users className="w-4 h-4 mr-1" />
@@ -797,14 +784,43 @@ export default function HotelBookingPage() {
                     <span>Monto Total:</span>
                     <span className="text-primary">{formatPrice(calculateTotalPrice())}</span>
                   </div>
-                  <Button type="submit" size="lg" className="w-full">
-                    {paymentMethod === 'cash' ? 'Confirmar Reserva' : 'Proceder al Pago'}
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    {paymentMethod === 'cash' ? '✅ Confirmar Reserva' : '🚀 Proceder al Pago Seguro'}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
         )}
+
+        {/* Features Section */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Wifi className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Conectividad</h3>
+            <p className="text-gray-600">WiFi gratuito</p>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Coffee className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Desayuno Amazonico</h3>
+            <p className="text-gray-600">Desayuno saludable amazónico</p>
+          </div>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Car className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Construccion Bioclimatica</h3>
+            <p className="text-gray-600">Arquitectura integrada con la naturaleza para un mejor descanso</p>
+          </div>
+        </div>
       </div>
     </div>
   );

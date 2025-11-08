@@ -100,7 +100,7 @@ export default function TourCard({
             <p className={`${isMonetary ? 'text-2xl' : 'text-base'} font-bold text-card-foreground`}>
               {priceDisplay}
             </p>
-            {isMonetary && showPriceSubtext && <p className="text-xs text-muted-foreground">per person</p>}
+            {isMonetary && showPriceSubtext && <p className="text-xs text-muted-foreground">por persona</p>}
           </div>
         </div>
       </CardContent>
