@@ -17,7 +17,8 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5000", // For local development (backend serves frontend)
-  "http://localhost:5173"  // For Vite dev server if used separately
+  "http://localhost:5173",  // For Vite dev server if used separately
+  "https://ayahuascapuertonarino.com" // Production frontend
 ];
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
