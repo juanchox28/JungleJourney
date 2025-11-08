@@ -6,7 +6,7 @@ import { execSync } from "child_process";
 import path from "path";
 import multer from "multer";
 import fetch from "node-fetch";
-import { sendConfirmationEmail } from "./emailService.js";
+import { sendConfirmationEmail, sendPaymentFailureNotification } from "./emailService.js";
 // import sharp from "sharp";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -187,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Request body:', req.body);
 
     try {
-      const { guestName, guestEmail, guestCount, tourDate, tourId, totalPrice, participants, isRoundTrip, returnDate, returnTime, returnRouteId } = req.body;
+      const { guestName, guestEmail, guestCount, tourDate, tourId, totalPrice, participants } = req.body;
 
       if (!WOMPI_PRIVATE_KEY) {
         console.error('❌ WOMPI_PRIVATE_KEY not configured');
@@ -210,11 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPrice: totalPrice.toString(),
         reference,
         status: "payment_pending",
-        participants: participants ? JSON.stringify(participants) : null,
-        isRoundTrip: isRoundTrip ? 1 : 0,
-        returnDate: returnDate || null,
-        returnTime: returnTime || null,
-        returnRouteId: returnRouteId || null
+        participants: participants ? JSON.stringify(participants) : null
       });
 
       console.log("💾 Tour booking created:", booking);
@@ -269,6 +265,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "payment_failed",
           paymentStatus: "ERROR"
         };
+
+        // Send payment failure notification
+        try {
+          await sendPaymentFailureNotification({
+            reference,
+            customerName: guestName,
+            customerEmail: guestEmail,
+            amount: parseFloat(totalPrice),
+            paymentData: wompiData,
+            bookingType: 'tour',
+            errorDetails: wompiData.error?.messages?.[0]?.message || wompiData.error || "Failed to create payment link"
+          });
+          console.log(`📧 Payment failure notification sent for tour booking: ${reference}`);
+        } catch (emailError) {
+          console.error(`⚠️ Failed to send payment failure notification for tour booking: ${reference}`, emailError);
+        }
 
         res.status(400).json({
           ok: false,
@@ -437,6 +449,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         booking.status = "payment_failed";
         booking.paymentStatus = "ERROR";
         booking.paymentData = JSON.stringify(wompiData);
+
+        // Send payment failure notification
+        try {
+          await sendPaymentFailureNotification({
+            reference,
+            customerName: guestName,
+            customerEmail: guestEmail,
+            amount: parseFloat(totalPrice),
+            paymentData: wompiData,
+            bookingType: 'accommodation',
+            errorDetails: wompiData.error?.messages?.[0]?.message || wompiData.error || "Failed to create payment link"
+          });
+          console.log(`📧 Payment failure notification sent for accommodation booking: ${reference}`);
+        } catch (emailError) {
+          console.error(`⚠️ Failed to send payment failure notification for accommodation booking: ${reference}`, emailError);
+        }
 
         res.status(400).json({
           ok: false,
@@ -621,6 +649,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: 'Wompi webhook endpoint is active',
       timestamp: new Date().toISOString()
     });
+  });
+
+  // -------------------- CART CHECKOUT ENDPOINT --------------------
+  app.post("/api/create-cart-checkout", async (req, res) => {
+    console.log(`🛒 Cart checkout request from ${req.ip} at ${new Date().toISOString()}`);
+    console.log('Cart checkout body:', JSON.stringify(req.body, null, 2));
+
+    try {
+      const { guestName, guestEmail, specialRequests, items, totalPrice } = req.body;
+
+      if (!guestName || !guestEmail || !items || items.length === 0) {
+        console.error('❌ Missing required fields for cart checkout');
+        return res.status(400).json({
+          ok: false,
+          error: "Missing required fields",
+          message: "Name, email, and cart items are required"
+        });
+      }
+
+      if (!WOMPI_PRIVATE_KEY) {
+        console.error('❌ WOMPI_PRIVATE_KEY not configured');
+        return res.status(500).json({
+          ok: false,
+          error: "Wompi private key not configured",
+          message: "Please set WOMPI_PRIVATE_KEY in .env file"
+        });
+      }
+
+      const reference = `CART-${Date.now()}`;
+
+      // Create bookings for each cart item
+      const bookingPromises = items.map(async (item: any) => {
+        const bookingData: any = {
+          guestName,
+          guestEmail,
+          guestCount: item.participants,
+          totalPrice: item.totalPrice.toString(),
+          reference: `${reference}-${item.id}`,
+          status: "payment_pending"
+        };
+
+        // Set appropriate fields based on item type
+        if (item.type === 'tour') {
+          bookingData.tourId = item.details.tourId;
+          bookingData.tourDate = item.date;
+          bookingData.participants = JSON.stringify(item.details.participants);
+        } else if (item.type === 'transfer') {
+          bookingData.tourId = item.details.routeId;
+          bookingData.tourDate = item.date;
+        }
+
+        return await storage.createBooking(bookingData);
+      });
+
+      const bookings = await Promise.all(bookingPromises);
+      console.log("💾 Cart bookings created:", bookings.length, "bookings");
+
+      // Create Wompi payment link for the entire cart
+      const payload = {
+        name: `JungleJourney Cart Checkout - ${reference}`,
+        amount_in_cents: Math.round(parseFloat(totalPrice) * 100),
+        currency: "COP",
+        single_use: true,
+        description: `Cart checkout for ${guestName} - ${items.length} item(s) - Total: ${totalPrice}`,
+        redirect_url: `${FRONTEND_URL}/booking-success.html?reference=${reference}&type=cart&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&amount=${totalPrice}&items=${items.length}`,
+        collect_shipping: false,
+      };
+
+      console.log("📡 Sending cart checkout to Wompi:", payload);
+
+      const wompiRes = await fetch(`${WOMPI_BASE}/payment_links`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${WOMPI_PRIVATE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const wompiData = await wompiRes.json() as any;
+      console.log("📡 Wompi cart response:", wompiData);
+
+      if (wompiData.data && wompiData.data.id) {
+        // Update bookings with payment info
+        for (const booking of bookings) {
+          booking.wompiPaymentId = wompiData.data.id;
+          booking.checkoutUrl = `https://checkout.wompi.co/l/${wompiData.data.id}`;
+        }
+
+        res.json({
+          ok: true,
+          bookings,
+          checkout_url: `https://checkout.wompi.co/l/${wompiData.data.id}`,
+          wompi_response: wompiData,
+          reference
+        });
+      } else {
+        console.error("❌ Error en respuesta de Wompi para carrito:", JSON.stringify(wompiData, null, 2));
+
+        // Update booking statuses to failed
+        for (const booking of bookings) {
+          booking.status = "payment_failed";
+          booking.paymentStatus = "ERROR";
+        }
+
+        // Send payment failure notification for cart
+        try {
+          await sendPaymentFailureNotification({
+            reference,
+            customerName: guestName,
+            customerEmail: guestEmail,
+            amount: parseFloat(totalPrice),
+            paymentData: wompiData,
+            bookingType: `cart (${items.length} items)`,
+            errorDetails: wompiData.error?.messages?.[0]?.message || wompiData.error || "Failed to create payment link"
+          });
+          console.log(`📧 Payment failure notification sent for cart checkout: ${reference}`);
+        } catch (emailError) {
+          console.error(`⚠️ Failed to send payment failure notification for cart checkout: ${reference}`, emailError);
+        }
+
+        res.status(400).json({
+          ok: false,
+          bookings,
+          error: wompiData.error || "Failed to create payment link",
+          wompi_response: wompiData
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error en /api/create-cart-checkout:", err);
+      res.status(500).json({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        details: "Internal server error"
+      });
+    }
   });
 
   // Email confirmation endpoint

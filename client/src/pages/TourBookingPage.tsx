@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Home, Calendar, Users, MapPin, Clock, Star, Minus, Plus } from "lucide-react";
+import { Home, Calendar, Users, MapPin, Clock, Star, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Tour } from "@shared/schema";
 import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
+import { useCart } from "@/lib/cartContext";
 
 export default function TourBookingPage() {
+  const { addToCart } = useCart();
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [tourDate, setTourDate] = useState("");
   const [participantCount, setParticipantCount] = useState(1);
@@ -33,6 +35,43 @@ export default function TourBookingPage() {
     if (!selectedTour) return 0;
     const priceInfo = getPriceDisplay(selectedTour);
     return priceInfo.value * participantCount;
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedTour || !tourDate) {
+      alert("Por favor selecciona un tour y fecha");
+      return;
+    }
+
+    // Validate participant details
+    for (let i = 0; i < participantCount; i++) {
+      if (!participants[i]?.name || !participants[i]?.idOrPassport) {
+        alert(`Por favor completa el nombre y documento de identidad del participante ${i + 1}`);
+        return;
+      }
+    }
+
+    const totalPrice = calculateTourPrice();
+
+    const cartItem = {
+      id: `tour-${selectedTour.id}-${Date.now()}`,
+      type: 'tour' as const,
+      name: selectedTour.name,
+      date: tourDate,
+      participants: participantCount,
+      price: getPriceDisplay(selectedTour).value,
+      totalPrice,
+      details: {
+        tourId: selectedTour.id,
+        participants,
+        specialRequests,
+        guestName,
+        guestEmail,
+      },
+    };
+
+    addToCart(cartItem);
+    alert("Tour agregado al itinerario");
   };
 
   const handleTourBooking = async (e: React.FormEvent) => {
@@ -364,9 +403,21 @@ export default function TourBookingPage() {
                       <span>Total Amount:</span>
                       <span className="text-primary">{formatPrice(calculateTourPrice())}</span>
                     </div>
-                    <Button type="submit" size="lg" className="w-full">
-                      Book Tour Now
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="flex-1"
+                        onClick={handleAddToCart}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Agregar al Itinerario
+                      </Button>
+                      <Button type="submit" size="lg" className="flex-1">
+                        Reservar Ahora
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </CardContent>
