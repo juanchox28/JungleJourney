@@ -18,6 +18,7 @@ export default function TourBookingPage() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+  const [participants, setParticipants] = useState<{name: string, idOrPassport: string}[]>([{name: "", idOrPassport: ""}]);
 
   const { data: tours = [], isLoading } = useQuery({
     queryKey: ["tours"],
@@ -40,6 +41,14 @@ export default function TourBookingPage() {
     if (!selectedTour || !tourDate || !guestName || !guestEmail) {
       alert("Por favor completa todos los campos requeridos");
       return;
+    }
+
+    // Validate participant details
+    for (let i = 0; i < participantCount; i++) {
+      if (!participants[i]?.name || !participants[i]?.idOrPassport) {
+        alert(`Por favor completa el nombre y documento de identidad del participante ${i + 1}`);
+        return;
+      }
     }
 
     // Check booking advance time requirement
@@ -69,6 +78,7 @@ export default function TourBookingPage() {
           tourDate,
           tourId: selectedTour.id,
           totalPrice,
+          participants,
         }),
       });
 
@@ -241,7 +251,11 @@ export default function TourBookingPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setParticipantCount(Math.max(1, participantCount - 1))}
+                        onClick={() => {
+                          const newCount = Math.max(1, participantCount - 1);
+                          setParticipantCount(newCount);
+                          setParticipants(prev => prev.slice(0, newCount));
+                        }}
                         disabled={participantCount <= 1}
                       >
                         <Minus className="w-4 h-4" />
@@ -250,7 +264,17 @@ export default function TourBookingPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setParticipantCount(Math.min(20, participantCount + 1))}
+                        onClick={() => {
+                          const newCount = Math.min(20, participantCount + 1);
+                          setParticipantCount(newCount);
+                          setParticipants(prev => {
+                            const newParticipants = [...prev];
+                            while (newParticipants.length < newCount) {
+                              newParticipants.push({name: "", idOrPassport: ""});
+                            }
+                            return newParticipants;
+                          });
+                        }}
                         disabled={participantCount >= 20}
                       >
                         <Plus className="w-4 h-4" />
@@ -279,6 +303,48 @@ export default function TourBookingPage() {
                         placeholder="Enter your email"
                         required
                       />
+                    </div>
+                  </div>
+
+                  {/* Participant Details */}
+                  <div className="border-t pt-4">
+                    <Label className="text-base font-medium mb-4 block">Participant Details</Label>
+                    <div className="space-y-4">
+                      {participants.map((participant, index) => (
+                        <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                          <h4 className="font-medium text-gray-900 mb-3">Participant {index + 1}</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`participant-name-${index}`}>Full Name *</Label>
+                              <Input
+                                id={`participant-name-${index}`}
+                                value={participant.name}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].name = e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                placeholder="Enter full name"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`participant-id-${index}`}>ID or Passport *</Label>
+                              <Input
+                                id={`participant-id-${index}`}
+                                value={participant.idOrPassport}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].idOrPassport = e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                placeholder="Enter ID or passport number"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 

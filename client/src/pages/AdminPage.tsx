@@ -728,7 +728,6 @@ export default function AdminPage() {
                             onChange={(e) => updateTourPrice(tourItem.id, 'basePrice', e.target.value)}
                             className="w-24 h-8 text-center bg-gray-50"
                             placeholder={priceChanges[tourItem.id]?.price2 || tourItem.price2 || '0'}
-                            readOnly
                           />
                         </TableCell>
                         <TableCell>

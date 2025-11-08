@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,30 +12,51 @@ import type { Tour } from "@shared/schema";
 import { getApiUrl } from "@/lib/utils";
 
 export default function BoatTicketsPage() {
+  const params = useParams();
+  const categoryFilter = params.category || 'Traslados'; // Default to 'Traslados' if no category specified
+
   const [selectedRoute, setSelectedRoute] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [passengerCount, setPassengerCount] = useState(1);
   const [travelDate, setTravelDate] = useState("");
+  const [isRoundTrip, setIsRoundTrip] = useState(false);
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
+  const [returnRoute, setReturnRoute] = useState<string>("");
 
   // Fetch transfer routes from API
   const { data: transferRoutes = [] } = useQuery<Tour[]>({
-    queryKey: ['/api/tours'],
+    queryKey: ['/api/tours', categoryFilter],
     queryFn: async () => {
       const response = await fetch(getApiUrl('/api/tours'));
       if (!response.ok) throw new Error('Failed to fetch tours');
       const tours = await response.json();
-      // Filter only transfer routes
-      return tours.filter((tour: Tour) => tour.category === 'Traslados');
+      // Filter by category (Traslados by default, but can be extended)
+      return tours.filter((tour: Tour) => tour.category === categoryFilter);
     },
   });
 
   const selectedRouteData = transferRoutes.find(route => route.id === selectedRoute);
+  const returnRouteData = transferRoutes.find(route => route.id === returnRoute);
   const availableTimes = selectedRouteData?.description?.match(/\d{1,2}:\d{2}\s*(?:hs|AM|PM)/g) || [];
+  const returnAvailableTimes = returnRouteData?.description?.match(/\d{1,2}:\d{2}\s*(?:hs|AM|PM)/g) || [];
 
   const calculateTotal = () => {
-    if (!selectedRouteData) return 0;
-    const basePrice = parseInt(selectedRouteData.basePrice || "0");
-    return basePrice * passengerCount;
+    let total = 0;
+
+    // Calculate outbound trip
+    if (selectedRouteData) {
+      const outboundPrice = parseInt(selectedRouteData.basePrice || "0");
+      total += outboundPrice * passengerCount;
+    }
+
+    // Calculate return trip if round trip is selected
+    if (isRoundTrip && returnRouteData) {
+      const returnPrice = parseInt(returnRouteData.basePrice || "0");
+      total += returnPrice * passengerCount;
+    }
+
+    return total;
   };
 
   const formatPrice = (price: number) => {
@@ -49,6 +70,11 @@ export default function BoatTicketsPage() {
   const handleBooking = async () => {
     if (!selectedRoute || !selectedTime || !travelDate) {
       alert("Por favor completa todos los campos requeridos");
+      return;
+    }
+
+    if (isRoundTrip && (!returnRoute || !returnTime || !returnDate)) {
+      alert("Por favor completa todos los campos del viaje de regreso");
       return;
     }
 
@@ -74,6 +100,10 @@ export default function BoatTicketsPage() {
       tourDate: travelDate,
       tourId: selectedRoute,
       totalPrice,
+      isRoundTrip,
+      returnDate: isRoundTrip ? returnDate : null,
+      returnTime: isRoundTrip ? returnTime : null,
+      returnRouteId: isRoundTrip ? returnRoute : null,
     };
 
     try {
@@ -118,10 +148,13 @@ export default function BoatTicketsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Traslados Fluviales
+            {categoryFilter === 'Traslados' ? 'Traslados Fluviales' : 'Boat Tickets'}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Viaja entre destinos amazónicos con nuestro cómodo transporte fluvial
+            {categoryFilter === 'Traslados'
+              ? 'Viaja entre destinos amazónicos con nuestro cómodo transporte fluvial'
+              : 'Book your boat transportation services'
+            }
           </p>
         </div>
 
@@ -192,12 +225,39 @@ export default function BoatTicketsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Trip Type Selection */}
+                <div>
+                  <Label>Tipo de Viaje</Label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="tripType"
+                        checked={!isRoundTrip}
+                        onChange={() => setIsRoundTrip(false)}
+                        className="mr-2"
+                      />
+                      Solo Ida
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="tripType"
+                        checked={isRoundTrip}
+                        onChange={() => setIsRoundTrip(true)}
+                        className="mr-2"
+                      />
+                      Ida y Vuelta
+                    </label>
+                  </div>
+                </div>
+
                 {/* Route Selection */}
                 <div>
-                  <Label htmlFor="route">Seleccionar Ruta</Label>
+                  <Label htmlFor="route">Seleccionar Ruta de Ida</Label>
                   <Select value={selectedRoute} onValueChange={setSelectedRoute}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Elige tu ruta" />
+                      <SelectValue placeholder="Elige tu ruta de ida" />
                     </SelectTrigger>
                     <SelectContent>
                       {transferRoutes.map((route) => (
@@ -211,7 +271,7 @@ export default function BoatTicketsPage() {
 
                 {/* Travel Date */}
                 <div>
-                  <Label htmlFor="date">Fecha de Viaje</Label>
+                  <Label htmlFor="date">Fecha de Ida</Label>
                   <Input
                     id="date"
                     type="date"
@@ -224,7 +284,7 @@ export default function BoatTicketsPage() {
                 {/* Departure Time */}
                 {selectedRoute && (
                   <div>
-                    <Label htmlFor="time">Hora de Salida</Label>
+                    <Label htmlFor="time">Hora de Salida (Ida)</Label>
                     <Select value={selectedTime} onValueChange={setSelectedTime}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona hora de salida" />
@@ -238,6 +298,59 @@ export default function BoatTicketsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                )}
+
+                {/* Return Trip Details */}
+                {isRoundTrip && (
+                  <>
+                    {/* Return Route */}
+                    <div>
+                      <Label htmlFor="return-route">Seleccionar Ruta de Vuelta</Label>
+                      <Select value={returnRoute} onValueChange={setReturnRoute}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Elige tu ruta de vuelta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {transferRoutes.map((route) => (
+                            <SelectItem key={route.id} value={route.id}>
+                              {route.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Return Date */}
+                    <div>
+                      <Label htmlFor="return-date">Fecha de Vuelta</Label>
+                      <Input
+                        id="return-date"
+                        type="date"
+                        value={returnDate}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        min={travelDate || new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+
+                    {/* Return Time */}
+                    {returnRoute && (
+                      <div>
+                        <Label htmlFor="return-time">Hora de Salida (Vuelta)</Label>
+                        <Select value={returnTime} onValueChange={setReturnTime}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona hora de vuelta" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {returnAvailableTimes.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Passenger Count */}
@@ -265,45 +378,77 @@ export default function BoatTicketsPage() {
                 </div>
 
                 {/* Route Info */}
-                {selectedRouteData && (
+                {(selectedRouteData || (isRoundTrip && returnRouteData)) && (
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Detalles de la Ruta</h4>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span>Ruta:</span>
-                        <span>{selectedRouteData.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Duración:</span>
-                        <span>{selectedRouteData.duration}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Precio por persona:</span>
-                        <span>{formatPrice(parseInt(selectedRouteData.basePrice || "0"))}</span>
-                      </div>
+                    <h4 className="font-semibold mb-2">Detalles del Viaje</h4>
+                    <div className="space-y-3 text-sm text-gray-600">
+                      {/* Outbound Trip */}
+                      {selectedRouteData && (
+                        <div className="border-b pb-2">
+                          <div className="font-medium text-gray-900 mb-1">Viaje de Ida</div>
+                          <div className="flex justify-between">
+                            <span>Ruta:</span>
+                            <span>{selectedRouteData.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Duración:</span>
+                            <span>{selectedRouteData.duration}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Precio por persona:</span>
+                            <span>{formatPrice(parseInt(selectedRouteData.basePrice || "0"))}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Return Trip */}
+                      {isRoundTrip && returnRouteData && (
+                        <div>
+                          <div className="font-medium text-gray-900 mb-1">Viaje de Vuelta</div>
+                          <div className="flex justify-between">
+                            <span>Ruta:</span>
+                            <span>{returnRouteData.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Duración:</span>
+                            <span>{returnRouteData.duration}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Precio por persona:</span>
+                            <span>{formatPrice(parseInt(returnRouteData.basePrice || "0"))}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Total Price */}
-                {selectedRoute && travelDate && selectedTime && (
+                {selectedRoute && travelDate && selectedTime && (!isRoundTrip || (returnRoute && returnDate && returnTime)) && (
                   <div className="border-t pt-4">
                     <div className="flex justify-between items-center text-lg font-semibold">
                       <span>Total:</span>
                       <span className="text-primary">{formatPrice(calculateTotal())}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {passengerCount} pasajero{passengerCount > 1 ? 's' : ''} × {formatPrice(parseInt(selectedRouteData?.basePrice || "0"))}
-                    </p>
+                    <div className="text-sm text-gray-600 mt-1 space-y-1">
+                      <div>
+                        {passengerCount} pasajero{passengerCount > 1 ? 's' : ''} × {formatPrice(parseInt(selectedRouteData?.basePrice || "0"))} (ida)
+                      </div>
+                      {isRoundTrip && returnRouteData && (
+                        <div>
+                          {passengerCount} pasajero{passengerCount > 1 ? 's' : ''} × {formatPrice(parseInt(returnRouteData.basePrice || "0"))} (vuelta)
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 <Button
                   onClick={handleBooking}
                   className="w-full"
-                  disabled={!selectedRoute || !travelDate || !selectedTime}
+                  disabled={!selectedRoute || !travelDate || !selectedTime || (isRoundTrip && (!returnRoute || !returnDate || !returnTime))}
                 >
-                  Reservar Traslado Fluvial
+                  Reservar {isRoundTrip ? 'Viaje Ida y Vuelta' : 'Traslado Fluvial'}
                 </Button>
               </CardContent>
             </Card>

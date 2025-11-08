@@ -34,7 +34,12 @@ export default function ToursPage() {
       }
       const response = await fetch(getApiUrl(`/api/tours?${params}`));
       if (!response.ok) throw new Error('Failed to fetch tours');
-      return response.json();
+      const allTours = await response.json();
+      // If we're on the boat tickets page, filter for transfers only
+      if (window.location.pathname.startsWith('/boat-tickets')) {
+        return allTours.filter((tour: Tour) => tour.category === 'Traslados');
+      }
+      return allTours;
     },
   });
 

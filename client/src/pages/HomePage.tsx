@@ -77,6 +77,9 @@ export default function HomePage() {
     if (selectedLocation) {
       console.log('Search:', { selectedLocation });
       setLocation(`/tours?location=${selectedLocation}`);
+    } else {
+      // If no location selected, just go to tours page
+      setLocation('/tours');
     }
   };
 
@@ -156,7 +159,13 @@ export default function HomePage() {
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70 z-10" />
                   <select
                     value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedLocation(value);
+                      if (value) {
+                        setLocation(`/tours?location=${value}`);
+                      }
+                    }}
                     className="w-full pl-10 pr-4 py-3 bg-white/90 border border-white/30 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
                   >
                     <option value="">Seleccionar punto de partida</option>

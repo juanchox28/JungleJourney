@@ -187,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Request body:', req.body);
 
     try {
-      const { guestName, guestEmail, guestCount, tourDate, tourId, totalPrice } = req.body;
+      const { guestName, guestEmail, guestCount, tourDate, tourId, totalPrice, participants, isRoundTrip, returnDate, returnTime, returnRouteId } = req.body;
 
       if (!WOMPI_PRIVATE_KEY) {
         console.error('❌ WOMPI_PRIVATE_KEY not configured');
@@ -209,7 +209,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tourDate,
         totalPrice: totalPrice.toString(),
         reference,
-        status: "payment_pending"
+        status: "payment_pending",
+        participants: participants ? JSON.stringify(participants) : null,
+        isRoundTrip: isRoundTrip ? 1 : 0,
+        returnDate: returnDate || null,
+        returnTime: returnTime || null,
+        returnRouteId: returnRouteId || null
       });
 
       console.log("💾 Tour booking created:", booking);
@@ -285,10 +290,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // -------------------- WOMPI PAYMENT INTEGRATION --------------------
   app.post("/api/create-accommodation-booking", async (req, res) => {
     console.log(`💳 Create accommodation booking request from ${req.ip} at ${new Date().toISOString()}`);
-    console.log('Request body:', req.body);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
 
     try {
       const { guestName, guestEmail, guestCount, checkInDate, checkOutDate, accommodationId, totalPrice, paymentMethod, status } = req.body;
+
+      // Validate required fields
+      if (!guestName || !guestEmail || !guestCount || !checkInDate || !checkOutDate || !accommodationId || !totalPrice) {
+        console.error('❌ Missing required fields:', { guestName, guestEmail, guestCount, checkInDate, checkOutDate, accommodationId, totalPrice });
+        return res.status(400).json({
+          ok: false,
+          error: "Missing required fields",
+          message: "All booking fields are required"
+        });
+      }
 
       const reference = `BK-${Date.now()}`;
 

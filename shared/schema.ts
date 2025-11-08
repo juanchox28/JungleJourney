@@ -82,6 +82,11 @@ export const bookings = pgTable("bookings", {
   paymentStatus: text("payment_status"), // APPROVED, DECLINED, PENDING, etc.
   paymentData: text("payment_data"), // JSON string of payment details
   paymentMethod: text("payment_method"), // card, cash
+  participants: text("participants"), // JSON string of participant details
+  isRoundTrip: integer("is_round_trip").default(0), // 0 = one way, 1 = round trip
+  returnDate: text("return_date"), // Return trip date
+  returnTime: text("return_time"), // Return trip time
+  returnRouteId: text("return_route_id"), // Return trip route ID
 });
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
