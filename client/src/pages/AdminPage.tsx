@@ -75,26 +75,26 @@ export default function AdminPage() {
 
   // Data fetching
    const { data: tours = [] } = useQuery({
-     queryKey: ["tours"],
+     queryKey: ["admin-tours"],
      queryFn: async () => {
-       console.log("🔍 Fetching tours...");
-       const response = await fetch("/api/tours");
+       console.log("🔍 Fetching admin tours...");
+       const response = await fetch("/api/naane/tours");
        if (!response.ok) throw new Error("Failed to fetch tours");
        const data = await response.json();
-       console.log("✅ Tours fetched:", data.length, "items");
+       console.log("✅ Admin tours fetched:", data.length, "items");
        return data as Promise<Tour[]>;
      },
      enabled: isAuthenticated,
    });
 
    const { data: accommodations = [] } = useQuery({
-     queryKey: ["accommodations"],
+     queryKey: ["admin-accommodations"],
      queryFn: async () => {
-       console.log("🔍 Fetching accommodations...");
-       const response = await fetch("/api/accommodations");
+       console.log("🔍 Fetching admin accommodations...");
+       const response = await fetch("/api/naane/accommodations");
        if (!response.ok) throw new Error("Failed to fetch accommodations");
        const data = await response.json();
-       console.log("✅ Accommodations fetched:", data.length, "items");
+       console.log("✅ Admin accommodations fetched:", data.length, "items");
        return data as Promise<Accommodation[]>;
      },
      enabled: isAuthenticated,
