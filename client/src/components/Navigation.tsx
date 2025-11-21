@@ -74,11 +74,11 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
     : "text-foreground";
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${bgClass}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${bgClass}`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2" aria-label="Go to homepage">
               <img
                 src="/logo.png"
                 alt="Paraíso Ayahuasca Logo"
@@ -89,7 +89,7 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
                   e.currentTarget.nextElementSibling!.classList.remove('hidden');
                 }}
               />
-              <Leaf className={`w-8 h-8 ${textClass} hidden`} />
+              <Leaf className={`w-8 h-8 ${textClass} hidden`} aria-hidden="true" />
               <span className={`font-serif text-2xl font-bold ${textClass}`}>
                 Paraíso Ayahuasca
               </span>
@@ -101,15 +101,18 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
               href="/hotel-booking"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
             >
-              {t('nav.accommodations')}
+              Rooms
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className={`${textClass} hover:text-primary transition-colors font-medium flex items-center gap-1`}
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  aria-label="Tours menu"
                 >
-                  {t('nav.tours')}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  tours
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>

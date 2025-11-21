@@ -43,15 +43,24 @@ export default function TourCard({
   const isMonetary = priceDisplay.startsWith('$');
 
   return (
-    <Card 
+    <Card
       data-testid={`card-tour-${id}`}
       className="overflow-hidden hover-elevate active-elevate-2 transition-all cursor-pointer group"
       onClick={() => onClick?.(id)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Tour: ${title}. ${description}. Duration: ${duration}. Difficulty: ${difficulty}. Price: ${priceDisplay}. Rating: ${rating} out of 5 stars from ${reviews} reviews.`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.(id);
+        }
+      }}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img 
-          src={image} 
-          alt={title}
+        <img
+          src={image}
+          alt={`Tour image for ${title} - ${description}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-4 right-4">

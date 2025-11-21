@@ -90,7 +90,7 @@ export default function HomePage() {
   const featuredTours = tours?.slice(0, 6) || [];
 
   return (
-    <div>
+    <main>
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -117,13 +117,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Users className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">{t('hero.title')}</h3>
+                      <h3 className="text-xl font-bold mb-2 text-white">Rooms</h3>
                       <p className="mb-4 text-white/90 text-sm font-medium">
-                        {t('hero.subtitle')}
+                        Alojamientos en la selva amazónica
                       </p>
                       <Link href="/reservar">
                         <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
-                          {t('hero.cta.secondary')}
+                          Rooms
                         </Button>
                       </Link>
                     </CardContent>
@@ -135,13 +135,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Calendar className="w-6 h-6" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">{t('tours.title')}</h3>
+                      <h3 className="text-xl font-bold mb-2 text-white">Traslados</h3>
                       <p className="mb-4 text-white/90 text-sm font-medium">
-                        {t('tours.subtitle')}
+                        Transporte fluvial por el río Amazonas
                       </p>
                       <Link href="/boat-tickets">
                         <Button size="lg" className="w-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg border-2 border-white/30">
-                          {t('tours.book')}
+                          Traslados
                         </Button>
                       </Link>
                     </CardContent>
@@ -202,7 +202,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-serif text-4xl font-bold mb-4">Nuestros Destinos en Amazonas</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Alojamientos y tours en Leticia y Puerto Nariño, Colombia
             </p>
           </div>
@@ -262,7 +262,7 @@ export default function HomePage() {
 
           <div className="text-center mb-12">
             <h2 className="font-serif text-4xl font-bold mb-4">Tours Destacados</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Alojamientos y tours en Leticia y Puerto Nariño, Amazonas Colombia
             </p>
           </div>
@@ -303,6 +303,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-serif text-4xl font-bold mb-4">¿Por Qué Elegir Paraíso Ayahuasca?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Descubre por qué miles de viajeros eligen nuestras experiencias únicas en el Amazonas
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -368,7 +371,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-gray-300">
                 <li><a href="/hotel-booking" className="hover:text-white transition-colors">Reservas de Hotel</a></li>
                 <li><a href="/tours" className="hover:text-white transition-colors">Tours Guiados</a></li>
-                <li><a href="/boat-tickets" className="hover:text-white transition-colors">Tiquetes de Barco</a></li>
+                <li><a href="/boat-tickets" className="hover:text-white transition-colors">Traslados</a></li>
                 <li><a href="/accommodations" className="hover:text-white transition-colors">Alojamientos</a></li>
               </ul>
             </div>
@@ -388,6 +391,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

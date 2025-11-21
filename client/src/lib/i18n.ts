@@ -7,8 +7,8 @@ const resources = {
     translation: {
       // Navegación
       "nav.home": "Inicio",
-      "nav.tours": "Tours",
-      "nav.accommodations": "Alojamientos",
+      "nav.tours": "tours",
+      "nav.accommodations": "Rooms",
       "nav.about": "Sobre Nosotros",
       "nav.contact": "Contacto",
       "nav.admin": "Administración",
@@ -20,7 +20,7 @@ const resources = {
       "hero.cta.secondary": "Ver Habitaciones",
 
       // Tours
-      "tours.title": "Transporte Fluvial Rio Amazonas",
+      "tours.title": "Traslados",
       "tours.subtitle": "Descubre destinos inolvidables en el Amazonas Colombiano",
       "tours.filter.all": "Todos",
       "tours.filter.nature": "Naturaleza",
@@ -29,7 +29,7 @@ const resources = {
       "tours.duration": "Duración",
       "tours.location": "Ubicación",
       "tours.price": "Precio",
-      "tours.book": "Reservar",
+      "tours.book": "Traslados",
       "tours.details": "Ver Detalles",
 
       // Alojamientos
@@ -85,8 +85,8 @@ const resources = {
     translation: {
       // Navigation
       "nav.home": "Home",
-      "nav.tours": "Tours",
-      "nav.accommodations": "Accommodations",
+      "nav.tours": "tours",
+      "nav.accommodations": "Rooms",
       "nav.about": "About Us",
       "nav.contact": "Contact",
       "nav.admin": "Admin",
@@ -98,7 +98,7 @@ const resources = {
       "hero.cta.secondary": "View Accommodations",
 
       // Tours
-      "tours.title": "Our Tours",
+      "tours.title": "Traslados",
       "tours.subtitle": "Discover unforgettable experiences in the Colombian Amazon",
       "tours.filter.all": "All",
       "tours.filter.nature": "Nature",
@@ -107,7 +107,7 @@ const resources = {
       "tours.duration": "Duration",
       "tours.location": "Location",
       "tours.price": "Price",
-      "tours.book": "Book",
+      "tours.book": "Traslados",
       "tours.details": "View Details",
 
       // Accommodations

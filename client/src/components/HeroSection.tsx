@@ -29,16 +29,18 @@ export default function HeroSection({ backgroundImage, onSearch }: HeroSectionPr
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div 
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden" aria-labelledby="hero-title">
+      <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundImage})` }}
+        role="img"
+        aria-label="Amazon rainforest canopy with sunlight"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background/90" />
       
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-12">
-          <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
+          <h1 id="hero-title" className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
             Amazonas Tours - Versión Final
           </h1>
           <p className="text-xl sm:text-2xl text-white/95 max-w-3xl mx-auto drop-shadow-md">
@@ -91,6 +93,6 @@ export default function HeroSection({ backgroundImage, onSearch }: HeroSectionPr
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
