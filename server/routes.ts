@@ -390,12 +390,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const amountInCents = Math.round(parseFloat(totalPrice) * 100);
 
       // Validate amount is reasonable (prevent fraud)
-      if (amountInCents < 1000 || amountInCents > 10000000) { // Between ~$10 and ~$100,000 COP
+      if (amountInCents < 100000 || amountInCents > 1000000000) { // Between 1,000 and 10,000,000 COP
         console.error(`❌ Invalid amount: ${amountInCents} cents`);
         return res.status(400).json({
           ok: false,
           error: "Invalid payment amount",
-          message: "Amount must be between $10 and $100,000 COP"
+          message: "Amount must be between $1,000 and $10,000,000 COP"
         });
       }
 
@@ -831,7 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/auth/logout', function(req, res, next) {
+  app.get('/api/auth/logout', function (req, res, next) {
     (req.session as any).isAdmin = false;
     req.session.destroy((err) => {
       if (err) {
