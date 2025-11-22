@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+
+// Helper function to format date string without timezone issues
+const formatDateString = (dateString: string) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-').map(Number);
+  // Using UTC to prevent timezone shifts. The user selects a "day", not a "time".
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC' // Ensure the output is based on UTC
+  });
+};
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -378,9 +392,9 @@ export default function HotelBookingPage() {
               <div className="text-sm">
                 {checkInDate ? (
                   <div>
-                    <div className="font-medium text-gray-900">Entrada: {new Date(checkInDate).toLocaleDateString('es-CO')}</div>
+                    <div className="font-medium text-gray-900">Entrada: {formatDateString(checkInDate)}</div>
                     {checkOutDate && (
-                      <div className="font-medium text-gray-900">Salida: {new Date(checkOutDate).toLocaleDateString('es-CO')}</div>
+                      <div className="font-medium text-gray-900">Salida: {formatDateString(checkOutDate)}</div>
                     )}
                     {checkInDate && checkOutDate && (
                       <div className="text-xs text-gray-500 mt-1">
