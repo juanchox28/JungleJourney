@@ -16,89 +16,89 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function AdminPage() {
-    const [isAuthenticated, setIsAuthenticated] = useState(true); // No authentication required
-    const [activeTab, setActiveTab] = useState("tours");
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // No authentication required
+  const [activeTab, setActiveTab] = useState("tours");
 
-    console.log("🔍 AdminPage render - isAuthenticated:", isAuthenticated);
-   const [editingTour, setEditingTour] = useState<Tour | null>(null);
-   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
-   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
-   const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
-   const [deletingTourId, setDeletingTourId] = useState<string | null>(null);
-   const [deletingAccommodationId, setDeletingAccommodationId] = useState<string | null>(null);
+  console.log("🔍 AdminPage render - isAuthenticated:", isAuthenticated);
+  const [editingTour, setEditingTour] = useState<Tour | null>(null);
+  const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
+  const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
+  const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
+  const [deletingTourId, setDeletingTourId] = useState<string | null>(null);
+  const [deletingAccommodationId, setDeletingAccommodationId] = useState<string | null>(null);
 
-   // Update accommodation mutation (missing from current code)
-   const updateAccommodationMutation = useMutation({
-     mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
-       const response = await fetch(`/api/naane/accommodations/${id}`, {
-         method: "PUT",
-         headers: {
-           "Content-Type": "application/json",
-         },
-         body: JSON.stringify(accommodationData),
-       });
-       if (!response.ok) throw new Error("Failed to update accommodation");
-       return response.json();
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ["accommodations"] });
-       setIsAccommodationDialogOpen(false);
-       setEditingAccommodation(null);
-       toast({ title: "Success", description: "Accommodation updated successfully" });
-     },
-   });
+  // Update accommodation mutation (missing from current code)
+  const updateAccommodationMutation = useMutation({
+    mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
+      const response = await fetch(`/api/naane/accommodations/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(accommodationData),
+      });
+      if (!response.ok) throw new Error("Failed to update accommodation");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+      setIsAccommodationDialogOpen(false);
+      setEditingAccommodation(null);
+      toast({ title: "Success", description: "Accommodation updated successfully" });
+    },
+  });
 
-   const deleteAccommodationMutation = useMutation({
-     mutationFn: async (id: string) => {
-       const response = await fetch(`/api/naane/accommodations/${id}`, {
-         method: "DELETE",
-       });
-       if (!response.ok) throw new Error("Failed to delete accommodation");
-       return response.json();
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ["accommodations"] });
-       setDeletingAccommodationId(null);
-       toast({ title: "Success", description: "Accommodation deleted successfully" });
-     },
-   });
+  const deleteAccommodationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/naane/accommodations/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete accommodation");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accommodations"] });
+      setDeletingAccommodationId(null);
+      toast({ title: "Success", description: "Accommodation deleted successfully" });
+    },
+  });
 
-   const { toast } = useToast();
-   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-   // Authentication - bypassed
-    const handleLogin = async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-      console.log("🔓 Admin login bypassed - no authentication required");
-      setIsAuthenticated(true);
-    };
+  // Authentication - bypassed
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    console.log("🔓 Admin login bypassed - no authentication required");
+    setIsAuthenticated(true);
+  };
 
   // Data fetching
-   const { data: tours = [] } = useQuery({
-     queryKey: ["tours"],
-     queryFn: async () => {
-       console.log("🔍 Fetching tours...");
-       const response = await fetch("/api/tours");
-       if (!response.ok) throw new Error("Failed to fetch tours");
-       const data = await response.json();
-       console.log("✅ Tours fetched:", data.length, "items");
-       return data as Promise<Tour[]>;
-     },
-     enabled: isAuthenticated,
-   });
+  const { data: tours = [] } = useQuery({
+    queryKey: ["tours"],
+    queryFn: async () => {
+      console.log("🔍 Fetching tours...");
+      const response = await fetch("/api/naane/tours");
+      if (!response.ok) throw new Error("Failed to fetch tours");
+      const data = await response.json();
+      console.log("✅ Tours fetched:", data.length, "items");
+      return data as Promise<Tour[]>;
+    },
+    enabled: isAuthenticated,
+  });
 
-   const { data: accommodations = [] } = useQuery({
-     queryKey: ["accommodations"],
-     queryFn: async () => {
-       console.log("🔍 Fetching accommodations...");
-       const response = await fetch("/api/accommodations");
-       if (!response.ok) throw new Error("Failed to fetch accommodations");
-       const data = await response.json();
-       console.log("✅ Accommodations fetched:", data.length, "items");
-       return data as Promise<Accommodation[]>;
-     },
-     enabled: isAuthenticated,
-   });
+  const { data: accommodations = [] } = useQuery({
+    queryKey: ["accommodations"],
+    queryFn: async () => {
+      console.log("🔍 Fetching accommodations...");
+      const response = await fetch("/api/naane/accommodations");
+      if (!response.ok) throw new Error("Failed to fetch accommodations");
+      const data = await response.json();
+      console.log("✅ Accommodations fetched:", data.length, "items");
+      return data as Promise<Accommodation[]>;
+    },
+    enabled: isAuthenticated,
+  });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["admin-bookings"],
