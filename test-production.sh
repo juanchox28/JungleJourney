@@ -44,7 +44,7 @@ test_frontend_accessibility() {
     fi
 
     # Test admin page
-    if curl -s -I "$PROD_FRONTEND/admin" | head -n 1 | grep -q "200\|301\|302"; then
+    if curl -s -I "$PROD_FRONTEND/naane" | head -n 1 | grep -q "200\|301\|302"; then
         print_status "Production admin page accessible"
     else
         print_error "Production admin page not accessible"
@@ -97,15 +97,15 @@ test_backend_api() {
 test_admin_auth() {
     echo "🔐 Testing admin authentication..."
 
-    # Test admin login (should return 401/403 without auth)
+    # Test admin login (currently bypassed, so we expect 200)
     response=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
-        "$PROD_BACKEND/api/admin/bookings" \
+        "$PROD_BACKEND/api/naane/bookings" \
         -H "Authorization: Bearer admin123")
 
-    if [ "$response" = "401" ] || [ "$response" = "403" ]; then
-        print_status "Production admin authentication properly protected"
-    elif [ "$response" = "200" ]; then
-        print_warning "Admin access working (verify this is expected in production)"
+    if [ "$response" = "200" ]; then
+        print_warning "Admin access accessible (Auth is BYPASSED - Security Risk)"
+    elif [ "$response" = "401" ] || [ "$response" = "403" ]; then
+        print_status "Production admin authentication protected"
     else
         print_error "Production admin endpoint returned unexpected status: $response"
         return 1
