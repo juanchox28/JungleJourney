@@ -16,7 +16,7 @@ import HotelBookingPage from "@/pages/HotelBookingPage";
 import TourBookingPage from "@/pages/TourBookingPage";
 import BoatTicketsPage from "@/pages/BoatTicketsPage";
 import CheckoutPage from "@/pages/CheckoutPage";
-import AdminPage from "@/pages/AdminPage";
+import AdministratorPage from "@/pages/AdministratorPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,7 +33,7 @@ function Router() {
       <Route path="/boat-tickets" component={BoatTicketsPage} />
       <Route path="/boat-tickets/:category" component={BoatTicketsPage} />
       <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/naane" component={AdminPage} />
+      <Route path="/administrador" component={AdministratorPage} />
       <Route component={NotFound} />
     </Switch>
   );

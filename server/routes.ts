@@ -181,6 +181,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // -------------------- ADMIN ROUTES --------------------
+
+  // Tours Admin
+  app.post("/api/admin/tours", async (req, res) => {
+    try {
+      const tourData = req.body;
+      const tour = await storage.createTour(tourData);
+      res.status(201).json(tour);
+    } catch (error) {
+      console.error('Error creating tour:', error);
+      res.status(500).json({ error: 'Failed to create tour' });
+    }
+  });
+
+  app.put("/api/admin/tours/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tourData = req.body;
+      const updatedTour = await storage.updateTour(id, tourData);
+      if (!updatedTour) {
+        return res.status(404).json({ error: 'Tour not found' });
+      }
+      res.json(updatedTour);
+    } catch (error) {
+      console.error('Error updating tour:', error);
+      res.status(500).json({ error: 'Failed to update tour' });
+    }
+  });
+
+  app.delete("/api/admin/tours/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteTour(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Tour not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting tour:', error);
+      res.status(500).json({ error: 'Failed to delete tour' });
+    }
+  });
+
+  // Accommodations Admin
+  app.post("/api/admin/accommodations", async (req, res) => {
+    try {
+      const accommodationData = req.body;
+      const accommodation = await storage.createAccommodation(accommodationData);
+      res.status(201).json(accommodation);
+    } catch (error) {
+      console.error('Error creating accommodation:', error);
+      res.status(500).json({ error: 'Failed to create accommodation' });
+    }
+  });
+
+  app.put("/api/admin/accommodations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const accommodationData = req.body;
+      const updatedAccommodation = await storage.updateAccommodation(id, accommodationData);
+      if (!updatedAccommodation) {
+        return res.status(404).json({ error: 'Accommodation not found' });
+      }
+      res.json(updatedAccommodation);
+    } catch (error) {
+      console.error('Error updating accommodation:', error);
+      res.status(500).json({ error: 'Failed to update accommodation' });
+    }
+  });
+
+  app.delete("/api/admin/accommodations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteAccommodation(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Accommodation not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting accommodation:', error);
+      res.status(500).json({ error: 'Failed to delete accommodation' });
+    }
+  });
+
+  // Bookings Admin
+  app.get("/api/admin/bookings", async (req, res) => {
+    try {
+      const bookings = await storage.getBookings();
+      res.json(bookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  });
+
   // -------------------- TOUR BOOKING ENDPOINT --------------------
   app.post("/api/create-tour-booking", async (req, res) => {
     console.log(`🎯 Create tour booking request from ${req.ip} at ${new Date().toISOString()}`);
@@ -831,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/auth/logout', function(req, res, next) {
+  app.get('/api/auth/logout', function (req, res, next) {
     (req.session as any).isAdmin = false;
     req.session.destroy((err) => {
       if (err) {
