@@ -1,0 +1,15 @@
+{
+  "media": {
+    "root": "client/public/uploads",
+    "public": "client/public"
+  },
+  "content": {
+    "root": "client/src"
+  },
+  "code": {
+    "root": ""
+  },
+  "themeConfig": [],
+  "arrangement": [],
+  "showCommitModal": false
+}
