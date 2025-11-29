@@ -1,17 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, User, Moon, Sun, Languages, MapPin } from "lucide-react";
+import { Leaf, Menu, User, Moon, Sun, Languages } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { Tour } from "@shared/schema";
 
 interface NavigationProps {
   transparent?: boolean;
@@ -31,19 +28,6 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [currentLang, setCurrentLang] = useState('es');
-
-  // Fetch tours for location dropdown
-  const { data: tours = [] } = useQuery({
-    queryKey: ["tours"],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/tours`);
-      if (!response.ok) throw new Error("Failed to fetch tours");
-      return response.json() as Promise<Tour[]>;
-    },
-  });
-
-  // Get unique locations from tours
-  const locations = Array.from(new Set(tours.map(tour => tour.location).filter(Boolean))).sort();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,12 +49,12 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
     console.log('Dark mode:', newDarkMode);
   };
 
-  const bgClass = transparent && !scrolled 
-    ? "bg-transparent" 
+  const bgClass = transparent && !scrolled
+    ? "bg-transparent"
     : "bg-background/95 backdrop-blur-md border-b border-border";
 
-  const textClass = transparent && !scrolled 
-    ? "text-white" 
+  const textClass = transparent && !scrolled
+    ? "text-white"
     : "text-foreground";
 
   return (
@@ -103,44 +87,6 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
             >
               Rooms
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={`${textClass} hover:text-primary transition-colors font-medium flex items-center gap-1`}
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                  aria-label="Tours menu"
-                >
-                  tours
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                <DropdownMenuItem asChild>
-                  <Link href="/tours" className="w-full">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Ver Todos los Tours
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {locations.map((location) => {
-                  const locationTours = tours.filter(tour => tour.location === location);
-                  return (
-                    <DropdownMenuItem key={location} asChild>
-                      <Link href={`/tours?location=${location}`} className="w-full">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {location === 'leticia' ? 'Leticia' : location === 'puerto-narino' ? 'Puerto Nariño' : location === 'mocagua' ? 'Mocagua' : location}
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          ({locationTours.length})
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
             <button
               data-testid="link-about"
               className={`${textClass} hover:text-primary transition-colors font-medium`}

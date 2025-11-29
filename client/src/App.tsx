@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cartContext";
 import Navigation from "@/components/Navigation";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import FloatingItinerary from "@/components/FloatingItinerary";
 import HomePage from "@/pages/HomePage";
 import ToursPage from "@/pages/ToursPage";
 import TourDetailPage from "@/pages/TourDetailPage";
@@ -23,15 +22,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/tours" component={ToursPage} />
-      <Route path="/tour/:id" component={TourDetailPage} />
       <Route path="/accommodations" component={AccommodationsPage} />
       <Route path="/accommodation/:id" component={AccommodationDetailPage} />
       <Route path="/reservar" component={HotelBookingPage} />
       <Route path="/hotel-booking" component={HotelBookingPage} />
-      <Route path="/tour-booking" component={TourBookingPage} />
-      <Route path="/boat-tickets" component={BoatTicketsPage} />
-      <Route path="/boat-tickets/:category" component={BoatTicketsPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/administrador" component={AdministratorPage} />
       <Route component={NotFound} />
@@ -46,7 +40,6 @@ function App() {
         <TooltipProvider>
           <Router />
           <WhatsAppButton />
-          <FloatingItinerary />
           <Toaster />
         </TooltipProvider>
       </CartProvider>
