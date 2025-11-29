@@ -28,11 +28,14 @@ export default function AdministratorPage() {
     const [isAccommodationDialogOpen, setIsAccommodationDialogOpen] = useState(false);
     const [priceChanges, setPriceChanges] = useState<Record<string, Partial<Tour>>>({});
 
+    // Base API URL from environment variables
+    const API_URL = import.meta.env.VITE_API_BASE_URL || "";
+
     // Data fetching
     const { data: tours = [] } = useQuery({
         queryKey: ["admin-tours"],
         queryFn: async () => {
-            const response = await fetch("/api/tours"); // Use public endpoint for reading
+            const response = await fetch(`${API_URL}/api/tours`); // Use public endpoint for reading
             if (!response.ok) throw new Error("Failed to fetch tours");
             return response.json() as Promise<Tour[]>;
         },
@@ -41,7 +44,7 @@ export default function AdministratorPage() {
     const { data: accommodations = [] } = useQuery({
         queryKey: ["admin-accommodations"],
         queryFn: async () => {
-            const response = await fetch("/api/accommodations"); // Use public endpoint for reading
+            const response = await fetch(`${API_URL}/api/accommodations`); // Use public endpoint for reading
             if (!response.ok) throw new Error("Failed to fetch accommodations");
             return response.json() as Promise<Accommodation[]>;
         },
@@ -50,7 +53,7 @@ export default function AdministratorPage() {
     const { data: bookings = [] } = useQuery({
         queryKey: ["admin-bookings"],
         queryFn: async () => {
-            const response = await fetch("/api/admin/bookings");
+            const response = await fetch(`${API_URL}/api/admin/bookings`);
             if (!response.ok) throw new Error("Failed to fetch bookings");
             return response.json() as Promise<Booking[]>;
         },
@@ -59,7 +62,7 @@ export default function AdministratorPage() {
     // Mutations
     const createTourMutation = useMutation({
         mutationFn: async (tourData: any) => {
-            const response = await fetch("/api/admin/tours", {
+            const response = await fetch(`${API_URL}/api/admin/tours`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(tourData),
@@ -77,7 +80,7 @@ export default function AdministratorPage() {
 
     const updateTourMutation = useMutation({
         mutationFn: async ({ id, tourData }: { id: string; tourData: any }) => {
-            const response = await fetch(`/api/admin/tours/${id}`, {
+            const response = await fetch(`${API_URL}/api/admin/tours/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(tourData),
@@ -95,7 +98,7 @@ export default function AdministratorPage() {
 
     const deleteTourMutation = useMutation({
         mutationFn: async (id: string) => {
-            const response = await fetch(`/api/admin/tours/${id}`, {
+            const response = await fetch(`${API_URL}/api/admin/tours/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete tour");
@@ -109,7 +112,7 @@ export default function AdministratorPage() {
 
     const createAccommodationMutation = useMutation({
         mutationFn: async (accommodationData: any) => {
-            const response = await fetch("/api/admin/accommodations", {
+            const response = await fetch(`${API_URL}/api/admin/accommodations`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(accommodationData),
@@ -127,7 +130,7 @@ export default function AdministratorPage() {
 
     const updateAccommodationMutation = useMutation({
         mutationFn: async ({ id, accommodationData }: { id: string; accommodationData: any }) => {
-            const response = await fetch(`/api/admin/accommodations/${id}`, {
+            const response = await fetch(`${API_URL}/api/admin/accommodations/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(accommodationData),
@@ -145,7 +148,7 @@ export default function AdministratorPage() {
 
     const deleteAccommodationMutation = useMutation({
         mutationFn: async (id: string) => {
-            const response = await fetch(`/api/admin/accommodations/${id}`, {
+            const response = await fetch(`${API_URL}/api/admin/accommodations/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete accommodation");
