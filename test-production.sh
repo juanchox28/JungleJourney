@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROD_FRONTEND="https://ayahuascapuertonarino.com"
-PROD_BACKEND="https://jungle-tours-backend.fly.dev"
+PROD_BACKEND="https://jungle-tours-backend-production.up.railway.app"
 
 # Function to print status
 print_status() {
