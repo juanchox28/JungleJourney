@@ -16,7 +16,6 @@
     "check": "tsc",
     "test": "vitest",
     "db:push": "drizzle-kit push",
-    "deploy:server": "fly deploy",
     "deploy:client": "npm run build:client:prod && echo 'Upload dist/public/ to Hostinger manually or via FTP'"
   },
   "dependencies": {

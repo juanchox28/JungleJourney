@@ -1,94 +1,95 @@
 # Deployment Guide
 
-This guide explains how to deploy the JungleJourney application with backend on fly.io and frontend as static files on Hostinger.
+This guide explains how to deploy the JungleJourney application with backend on Railway and frontend on Hostinger.
 
 ## Prerequisites
 
-- fly.io account and CLI installed
+- Railway account
 - Hostinger account with static hosting
-- Neon PostgreSQL database set up
+- GitHub repository connected to Railway
 
-## Backend Deployment (fly.io)
+## Backend Deployment (Railway)
 
-### 1. Configure fly.toml
+### 1. Connect Repository to Railway
 
-Update `fly.toml` with your app name:
-```toml
-app = "your-actual-app-name"
-```
+1. Go to [Railway](https://railway.app)
+2. Create a new project
+3. Connect your GitHub repository
+4. Railway will auto-detect the Dockerfile and deploy
 
 ### 2. Set Environment Variables
 
-Before deploying, set the required environment variables:
+In Railway dashboard → Variables, set:
+- `DATABASE_URL`: Your database connection string (if using)
+- `SERVE_STATIC`: `false` (API-only mode)
+- `NODE_ENV`: `production`
+- Other secrets (WOMPI keys, email credentials, etc.)
 
-```bash
-fly secrets set DATABASE_URL="your-neon-database-url"
-```
+### 3. Get the API URL
 
-The following are already configured in fly.toml:
-- NODE_ENV=production
-- SERVE_STATIC=false (prevents serving static files, API-only mode)
-
-### 3. Deploy to fly.io
-
-```bash
-fly launch
-```
-
-This will build and deploy your backend API.
-
-### 4. Get the API URL
-
-After deployment, note your fly.io app URL (e.g., `https://your-app.fly.dev`). You'll need this for the frontend.
+After deployment, Railway provides a URL like:
+`https://jungle-tours-backend-production.up.railway.app`
 
 ## Frontend Deployment (Hostinger)
 
-### 1. Build Static Files
+### 1. Set API Base URL
+
+Create/update `.env.production`:
+```env
+VITE_API_BASE_URL=https://jungle-tours-backend-production.up.railway.app
+```
+
+### 2. Build Static Files
 
 ```bash
-npm run build:client
+npm run build:client:prod
 ```
 
 This creates static files in `dist/public/`.
 
-### 2. Set API Base URL
-
-Create a `.env` file in the root directory:
-
-```env
-VITE_API_BASE_URL=https://your-app.fly.dev
-```
-
-Then rebuild:
-
-```bash
-npm run build:client
-```
-
 ### 3. Upload to Hostinger
 
-Upload the contents of `dist/public/` to your Hostinger static hosting directory.
+Upload the contents of `dist/public/` to your Hostinger directory via FTP.
+
+## Automated Deployment (GitHub Actions)
+
+The repository includes a GitHub Actions workflow (`.github/workflows/railway-deploy.yml`) that automatically:
+1. Deploys backend to Railway on push to main
+2. Builds and deploys frontend to Hostinger via FTP
+
+### Required GitHub Secrets
+
+Set these in GitHub → Settings → Secrets:
+- `RAILWAY_TOKEN`: Railway API token
+- `RAILWAY_SERVICE_NAME`: Your Railway service name
+- `HOSTINGER_FTP_HOST`: FTP hostname
+- `HOSTINGER_FTP_USERNAME`: FTP username
+- `HOSTINGER_FTP_PASSWORD`: FTP password
 
 ## Environment Variables Summary
 
-### fly.io (Backend)
-- `DATABASE_URL`: Your Neon PostgreSQL connection string
-- `PORT`: Automatically set by fly.io
+### Railway (Backend)
+- `DATABASE_URL`: Database connection string
+- `PORT`: Auto-set by Railway
 - `NODE_ENV`: production
 - `SERVE_STATIC`: false
+- `WOMPI_PUBLIC_KEY`: Wompi public key
+- `WOMPI_PRIVATE_KEY`: Wompi private key
+- `FRONTEND_URL`: https://ayahuascapuertonarino.com
 
 ### Build Time (Frontend)
-- `VITE_API_BASE_URL`: Your fly.io app URL (e.g., https://your-app.fly.dev)
+- `VITE_API_BASE_URL`: Railway backend URL
 
 ## Post-Deployment
 
-1. Verify the frontend loads on Hostinger
+1. Verify frontend loads on Hostinger
 2. Test API calls from frontend to backend
-3. Check database connectivity
-4. Run database migrations if needed: `npm run db:push` (locally with DATABASE_URL set)
+3. Check `/health` endpoint
+4. Test booking flow
 
 ## Troubleshooting
 
-- If API calls fail, check CORS settings in your Express server
-- Ensure VITE_API_BASE_URL is set correctly and rebuilt
-- Verify DATABASE_URL is set in fly.io secrets
+- If API calls fail, check CORS settings
+- Ensure `VITE_API_BASE_URL` is set correctly
+- Check Railway logs for backend errors
+- Verify all environment variables are set
