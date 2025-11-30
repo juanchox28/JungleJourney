@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN npm run build
 RUN npm prune --production
 
 # Expose port
-EXPOSE 5000
+EXPOSE 8080
 
 # Start the application
 CMD ["npm", "start"]
