@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const getApiUrl = (path: string) => {
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://jungle-tours-backend-production.up.railway.app';
   return `${apiUrl}${path}`;
 };
 

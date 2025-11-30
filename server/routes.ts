@@ -503,7 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redirect_url: `${FRONTEND_URL}/booking-success.html?reference=${reference}&type=accommodation&name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(guestEmail)}&checkIn=${checkInDate}&checkOut=${checkOutDate}&guests=${guestCount}&amount=${totalPrice}`,
         collect_shipping: false,
         // Add webhook URL for automatic status updates
-        webhook_url: `${process.env.BACKEND_URL || FRONTEND_URL.replace('http://', 'https://').replace('https://localhost:5000', 'https://your-fly-app.fly.dev')}/api/wompi/webhook`
+        webhook_url: `${process.env.BACKEND_URL || FRONTEND_URL.replace('http://', 'https://').replace('https://localhost:5000', 'https://jungle-tours-backend-production.up.railway.app')}/api/wompi/webhook`
       };
 
       console.log("📡 Sending to Wompi:", { ...payload, webhook_url: payload.webhook_url });
