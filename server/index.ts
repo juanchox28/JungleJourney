@@ -101,11 +101,16 @@ import { storage } from "./storage";
     // Only serve static files if SERVE_STATIC is not set to 'false'
     if (process.env.SERVE_STATIC !== 'false') {
       serveStatic(app);
+      // fall through to index.html if the file doesn't exist
+      app.use("*", (_req, res) => {
+        res.sendFile(path.resolve(process.cwd(), "dist", "public", "index.html"));
+      });
+    } else {
+      // API-only mode: return 404 for non-API routes
+      app.use("*", (_req, res) => {
+        res.status(404).json({ error: "Not found - this is an API-only server" });
+      });
     }
-    // fall through to index.html if the file doesn't exist
-    app.use("*", (_req, res) => {
-      res.sendFile(path.resolve(process.cwd(), "dist", "public", "index.html"));
-    });
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
