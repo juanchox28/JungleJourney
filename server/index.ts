@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
+import RedisStore from "connect-redis";
+import { createClient } from "redis";
 import { config } from "dotenv";
 import path from "path";
 import { registerRoutes } from "./routes";
@@ -36,7 +38,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Setup Redis client
+let sessionStore: any = undefined;
+if (process.env.REDIS_URL) {
+  const redisClient = createClient({ url: process.env.REDIS_URL });
+  redisClient.connect().catch(console.error);
+  sessionStore = new RedisStore({ client: redisClient });
+  console.log("Using Redis for session storage");
+} else {
+  console.log("Using MemoryStore for session storage");
+}
+
 app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
