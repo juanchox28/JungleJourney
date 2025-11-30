@@ -2,7 +2,7 @@ name: Deploy to Railway and Hostinger
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, hotel-static-v2 ]
   workflow_dispatch:
 
 concurrency:
