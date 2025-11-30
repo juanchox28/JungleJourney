@@ -1,5 +1,7 @@
 app = "jungle-tours-backend"
 
+[build]
+  builder = "paketo"
 
 [env]
   NODE_ENV = "production"
