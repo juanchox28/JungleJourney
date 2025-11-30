@@ -13,27 +13,12 @@ env:
   VITE_API_BASE_URL: https://jungle-tours-backend-production.up.railway.app
 
 jobs:
-  # 🚀 Deploy Backend to Railway
-  deploy-backend:
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: 🧾 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚂 Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: 🚀 Deploy to Railway
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_NAME }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
   # 🌐 Deploy Frontend to Hostinger via FTP
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: deploy-backend
+    needs: []
 
     steps:
       - name: 🧾 Checkout code
@@ -107,7 +92,7 @@ jobs:
   # 🧪 Run basic health checks
   health-check:
     runs-on: ubuntu-latest
-    needs: [deploy-backend, deploy-frontend]
+    needs: [deploy-frontend]
     if: success()
 
     steps:
