@@ -938,20 +938,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes - no authentication required
   app.post("/api/naane/login", (req, res) => {
-    console.log("🔓 Server: Admin login bypassed - no authentication required");
-    (req.session as any).isAdmin = true;
-    req.session.save((err) => {
-      if (err) {
-        console.error("Error saving session:", err);
-        return res.status(500).json({ success: false, error: "Error saving session" });
-      }
+    const { password } = req.body;
+    if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
+      (req.session as any).isAdmin = true;
       res.json({ success: true });
-    });
+    } else {
+      res.status(401).json({ success: false });
+    }
   });
 
   const requireAdmin = (req: any, res: any, next: any) => {
-    console.log("🔓 Server: Admin access - no authentication required");
-    next();
+    if ((req.session as any).isAdmin) {
+      next();
+    } else {
+      res.status(401).json({ error: 'Unauthorized' });
+    }
   };
 
 
@@ -1062,8 +1063,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/naane/bookings/:id", requireAdmin, async (req, res) => {
     try {
-      const updatedBooking = { ...req.body, id: req.params.id };
-      res.json(updatedBooking);
+      const booking = await storage.updateBooking(req.params.id, req.body);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      res.json(booking);
     } catch (error) {
       console.error('Error updating booking:', error);
       res.status(500).json({ error: 'Failed to update booking' });
