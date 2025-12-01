@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "@shared/schema";
+import { type User, type InsertUser, type Tour, type InsertTour, type Accommodation, type InsertAccommodation, type Booking, type InsertBooking } from "../shared/schema";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import path from "path";
@@ -84,7 +84,7 @@ export class MemStorage implements IStorage {
       console.log(`📂 Attempting to load tours from: ${this.toursFilePath}`);
       const toursData = await fs.readFile(this.toursFilePath, "utf-8");
       console.log(`✅ Successfully read tours file`);
-      
+
       const rawTours = JSON.parse(toursData) as any[];
       console.log(`📋 Found ${rawTours.length} raw tours`);
 
@@ -114,7 +114,7 @@ export class MemStorage implements IStorage {
 
         this.tours.set(id, tour);
       });
-      
+
       console.log(`✅ Initialized ${this.tours.size} tours in memory storage from ${this.toursFilePath}`);
     } catch (error) {
       console.error(`❌ Error reading or parsing tours data from ${this.toursFilePath}:`, error);
@@ -163,15 +163,15 @@ export class MemStorage implements IStorage {
 
   async getTours(filters?: { location?: string; category?: string }): Promise<Tour[]> {
     let tours = Array.from(this.tours.values());
-    
+
     if (filters?.location) {
       tours = tours.filter(tour => tour.location === filters.location);
     }
-    
+
     if (filters?.category) {
       tours = tours.filter(tour => tour.category === filters.category);
     }
-    
+
     return tours;
   }
 
@@ -302,6 +302,11 @@ export class MemStorage implements IStorage {
       paymentStatus: insertBooking.paymentStatus ?? null,
       paymentData: insertBooking.paymentData ?? null,
       paymentMethod: insertBooking.paymentMethod ?? null,
+      participants: insertBooking.participants ?? null,
+      isRoundTrip: insertBooking.isRoundTrip ?? 0,
+      returnDate: insertBooking.returnDate ?? null,
+      returnTime: insertBooking.returnTime ?? null,
+      returnRouteId: insertBooking.returnRouteId ?? null,
     };
     this.bookings.set(id, booking);
     return booking;
