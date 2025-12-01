@@ -1,8 +1,8 @@
-name: Deploy Full Stack App
+name: Deploy to Railway and Hostinger
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, hotel-static-v2 ]
   workflow_dispatch:
 
 concurrency:
@@ -10,40 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  VITE_API_BASE_URL: https://jungle-tours-backend.fly.dev
+  VITE_API_BASE_URL: https://jungle-tours-backend-production.up.railway.app
 
 jobs:
-  # 🚀 Deploy Backend to Fly.io
-  deploy-backend:
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: 🧾 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🏗️ Build backend
-        run: npm run build
-
-      - name: 🚀 Deploy to Fly.io
-        uses: superfly/flyctl-actions@1.4
-        with:
-          args: "deploy --remote-only"
 
   # 🌐 Deploy Frontend to Hostinger via FTP
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: deploy-backend
+    needs: []
 
     steps:
       - name: 🧾 Checkout code
@@ -117,14 +92,14 @@ jobs:
   # 🧪 Run basic health checks
   health-check:
     runs-on: ubuntu-latest
-    needs: [deploy-backend, deploy-frontend]
+    needs: [deploy-frontend]
     if: success()
 
     steps:
       - name: 🔍 Check backend health
         run: |
           sleep 30  # Wait for deployment to stabilize
-          curl -f https://jungle-tours-backend.fly.dev/api/version || exit 1
+          curl -f https://jungle-tours-backend-production.up.railway.app/health || exit 1
 
       - name: 🔍 Check frontend accessibility
         run: |

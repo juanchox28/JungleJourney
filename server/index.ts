@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
+import RedisStore from "connect-redis";
+import { createClient } from "redis";
 import { config } from "dotenv";
 import path from "path";
 import { registerRoutes } from "./routes";
@@ -36,7 +38,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Setup Redis client
+let sessionStore: any = undefined;
+if (process.env.REDIS_URL) {
+  const redisClient = createClient({ url: process.env.REDIS_URL });
+  redisClient.connect().catch(console.error);
+  sessionStore = new RedisStore({ client: redisClient });
+  console.log("Using Redis for session storage");
+} else {
+  console.log("Using MemoryStore for session storage");
+}
+
 app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
@@ -113,11 +127,16 @@ import { storage } from "./storage";
     }
   }
 
+  // Add a basic health check endpoint
+  app.get("/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
+  // Other ports are firewalled. Default to 8080 to match Dockerfile EXPOSE.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
+  const port = parseInt(process.env.PORT || '8080', 10);
   server.listen({
     port,
     host: "0.0.0.0",
