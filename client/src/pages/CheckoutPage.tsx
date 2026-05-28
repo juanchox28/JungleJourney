@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/lib/cartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,14 +6,47 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Calendar, Users, MapPin, Clock, ArrowLeft } from "lucide-react";
+import { Home, Calendar, Users, MapPin, Clock, ArrowLeft, ShoppingCart, Trash2, Plus } from "lucide-react";
+import Navigation from "@/components/Navigation";
 import { Link } from "wouter";
 
 export default function CheckoutPage() {
-  const { cart, getTotalPrice, clearCart } = useCart();
+  const { cart, getTotalPrice, clearCart, removeFromCart } = useCart();
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+
+  // Per-item extra details for tours (collected here at the end before payment)
+  const [itemExtras, setItemExtras] = useState<Record<string, { footSize?: string; dietaryRestrictions?: string }>>({});
+
+  // Auto-fill guest info from the first cart item (if any previous data) + initialize extras
+  useEffect(() => {
+    if (cart.length > 0) {
+      const first = cart[0];
+      if (first.details?.guestName) setGuestName(first.details.guestName);
+      if (first.details?.guestEmail) setGuestEmail(first.details.guestEmail);
+      if (first.details?.specialRequests) setSpecialRequests(first.details.specialRequests);
+
+      // Initialize extras for tour items
+      const initialExtras: Record<string, any> = {};
+      cart.forEach(item => {
+        if (item.type === 'tour') {
+          initialExtras[item.id] = {
+            footSize: item.details?.footSize || '',
+            dietaryRestrictions: item.details?.dietaryRestrictions || '',
+          };
+        }
+      });
+      setItemExtras(initialExtras);
+    }
+  }, [cart]);
+
+  const updateItemExtra = (itemId: string, field: 'footSize' | 'dietaryRestrictions', value: string) => {
+    setItemExtras(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], [field]: value },
+    }));
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -52,17 +85,32 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Create checkout data
+    // Enrich cart items with the final personal/extra info collected here (before payment)
+    const enrichedItems = cart.map(item => {
+      if (item.type === 'tour' && itemExtras[item.id]) {
+        return {
+          ...item,
+          details: {
+            ...item.details,
+            footSize: itemExtras[item.id].footSize,
+            dietaryRestrictions: itemExtras[item.id].dietaryRestrictions,
+          },
+        };
+      }
+      return item;
+    });
+
+    // Create checkout data — all personal information asked once at the end
     const checkoutData = {
       guestName,
       guestEmail,
       specialRequests,
-      items: cart,
+      items: enrichedItems,
       totalPrice: getTotalPrice(),
     };
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-cart-checkout`, {
+      const response = await fetch('/api/create-cart-checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,6 +152,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <Navigation />
       {/* Navigation Breadcrumb */}
       <div className="bg-white/80 backdrop-blur-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -119,14 +168,41 @@ export default function CheckoutPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
           <Link href="/">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Continuar Explorando
             </Button>
           </Link>
+
+          {/* Make "Add more" very noticeable so users add as many services as possible */}
+          <div className="flex flex-wrap gap-2">
+            <Link href="/tour-booking">
+              <Button 
+                variant="outline" 
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add more tours
+              </Button>
+            </Link>
+            <Link href="/hotel-booking">
+              <Button 
+                variant="outline" 
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add more rooms
+              </Button>
+            </Link>
+          </div>
         </div>
+
+        {/* Small encouragement text */}
+        <p className="text-xs text-muted-foreground -mt-3 mb-6">
+          Tip: Add more experiences to your itinerary before paying — the more the merrier!
+        </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Order Summary */}
@@ -140,18 +216,29 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {cart.map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getTypeIcon(item.type)}</span>
-                        <div>
-                          <div className="font-medium">{item.name}</div>
-                          <Badge variant="outline" className="text-xs">
-                            {getTypeLabel(item.type)}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
+                   <div key={item.id} className="border rounded-lg p-4 relative">
+                     <div className="flex items-start justify-between mb-3">
+                       <div className="flex items-center gap-2">
+                         <span className="text-lg">{getTypeIcon(item.type)}</span>
+                         <div>
+                           <div className="font-medium">{item.name}</div>
+                           <Badge variant="outline" className="text-xs">
+                             {getTypeLabel(item.type)}
+                           </Badge>
+                         </div>
+                       </div>
+
+                       {/* Delete button for this cart item */}
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         onClick={() => removeFromCart(item.id)}
+                         className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-1"
+                         title="Remove from cart"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
 
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -178,6 +265,30 @@ export default function CheckoutPage() {
                           {formatPrice(item.totalPrice)}
                         </span>
                       </div>
+
+                      {/* Per-tour extra fields — asked once here before payment */}
+                      {item.type === 'tour' && (
+                        <div className="mt-3 pt-3 border-t space-y-2">
+                          <div>
+                            <Label className="text-xs">Foot / Shoe Size</Label>
+                            <Input
+                              value={itemExtras[item.id]?.footSize || ''}
+                              onChange={(e) => updateItemExtra(item.id, 'footSize', e.target.value)}
+                              placeholder="e.g. 38, 42"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Dietary Restrictions</Label>
+                            <Input
+                              value={itemExtras[item.id]?.dietaryRestrictions || ''}
+                              onChange={(e) => updateItemExtra(item.id, 'dietaryRestrictions', e.target.value)}
+                              placeholder="Vegetarian, allergies..."
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -192,13 +303,13 @@ export default function CheckoutPage() {
             </Card>
           </div>
 
-          {/* Checkout Form */}
+          {/* Checkout Form — pre-filled from booking, no re-typing needed */}
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Información de Contacto</CardTitle>
+                <CardTitle>Información Personal y Detalles Finales</CardTitle>
                 <CardDescription>
-                  Completa tus datos para procesar la reserva
+                  Completa aquí tus datos y extras (solo una vez, antes de pagar).
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -241,11 +352,13 @@ export default function CheckoutPage() {
                     onClick={handleCheckout}
                     className="w-full"
                     size="lg"
+                    disabled={cart.length === 0}
                   >
-                    Proceder al Pago Seguro
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Pagar Ahora — {formatPrice(getTotalPrice())}
                   </Button>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    Serás redirigido a una pasarela de pago segura
+                    Tu info ya está pre-cargada. Serás redirigido a una pasarela de pago segura.
                   </p>
                 </div>
               </CardContent>

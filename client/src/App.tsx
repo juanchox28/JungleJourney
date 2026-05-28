@@ -22,10 +22,13 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/tours" component={ToursPage} />
+      <Route path="/tour/:id" component={TourDetailPage} />
       <Route path="/accommodations" component={AccommodationsPage} />
       <Route path="/accommodation/:id" component={AccommodationDetailPage} />
       <Route path="/reservar" component={HotelBookingPage} />
       <Route path="/hotel-booking" component={HotelBookingPage} />
+      <Route path="/tour-booking" component={TourBookingPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/administrador" component={AdministratorPage} />
       <Route component={NotFound} />

@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Home, MapPin, Clock, Users, Calendar, ArrowRight, Minus, Plus, ShoppingCart } from "lucide-react";
+import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
-import { getApiUrl } from "@/lib/utils";
+
 import { useCart } from "@/lib/cartContext";
 
 export default function BoatTicketsPage() {
@@ -26,7 +27,7 @@ export default function BoatTicketsPage() {
   const { data: transferRoutes = [] } = useQuery<Tour[]>({
     queryKey: ['/api/tours', categoryFilter],
     queryFn: async () => {
-      const response = await fetch(getApiUrl('/api/tours'));
+      const response = await fetch('/api/tours');
       if (!response.ok) throw new Error('Failed to fetch tours');
       const tours = await response.json();
       // Filter by category (Traslados by default, but can be extended)
@@ -109,7 +110,7 @@ export default function BoatTicketsPage() {
     };
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-tour-booking`, {
+      const response = await fetch('/api/create-tour-booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

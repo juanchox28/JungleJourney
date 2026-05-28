@@ -55,9 +55,9 @@ export class MemStorage implements IStorage {
     this.accommodations = new Map();
     this.bookings = new Map();
 
-    // Use server directory for data files in production, client/public in development
-    const isProduction = process.env.NODE_ENV === 'production';
-    const dataDir = isProduction ? 'server' : 'client/public';
+    // Always read canonical data files from the server/ directory
+    // (client/public copies have been removed as part of DB migration cleanup)
+    const dataDir = "server";
 
     this.toursFilePath = path.join(process.cwd(), dataDir, "tours_data.json");
     this.accommodationsFilePath = path.join(process.cwd(), dataDir, "accommodations_data.json");

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Home, Calendar, Users, MapPin, Clock, Star, Minus, Plus, ShoppingCart } from "lucide-react";
+import GuestCounter from "@/components/GuestCounter";
+import Navigation from "@/components/Navigation";
 import { Tour } from "@shared/schema";
 import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
 import { useCart } from "@/lib/cartContext";
@@ -22,10 +25,16 @@ export default function TourBookingPage() {
   const [specialRequests, setSpecialRequests] = useState("");
   const [participants, setParticipants] = useState<{name: string, idOrPassport: string}[]>([{name: "", idOrPassport: ""}]);
 
+  const [quickAddTour, setQuickAddTour] = useState<Tour | null>(null);
+  const [quickAddDate, setQuickAddDate] = useState("");
+  const [quickAddGuests, setQuickAddGuests] = useState(1);
+
+  const [, setLocation] = useLocation();
+
   const { data: tours = [], isLoading } = useQuery({
     queryKey: ["tours"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/tours`);
+      const response = await fetch('/api/tours');
       if (!response.ok) throw new Error("Failed to fetch tours");
       return response.json() as Promise<Tour[]>;
     },
@@ -74,6 +83,35 @@ export default function TourBookingPage() {
     alert("Tour agregado al itinerario");
   };
 
+  const handleQuickAddToCart = () => {
+    if (!quickAddTour || !quickAddDate) {
+      alert("Por favor selecciona una fecha para el tour");
+      return;
+    }
+
+    const priceInfo = getPriceDisplay(quickAddTour);
+    const totalPrice = priceInfo.value * quickAddGuests;
+
+    const cartItem = {
+      id: `tour-${quickAddTour.id}-${Date.now()}`,
+      type: 'tour' as const,
+      name: quickAddTour.name,
+      date: quickAddDate,
+      participants: quickAddGuests,
+      price: priceInfo.value,
+      totalPrice,
+      details: {
+        tourId: quickAddTour.id,
+      },
+    };
+
+    addToCart(cartItem);
+    setQuickAddTour(null);
+    setQuickAddDate("");
+    setQuickAddGuests(1);
+    setLocation('/checkout');
+  };
+
   const handleTourBooking = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -105,7 +143,7 @@ export default function TourBookingPage() {
     const totalPrice = calculateTourPrice();
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-tour-booking`, {
+      const response = await fetch('/api/create-tour-booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,6 +183,7 @@ export default function TourBookingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <Navigation />
       {/* Navigation Breadcrumb */}
       <div className="bg-white/80 backdrop-blur-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -214,13 +253,30 @@ export default function TourBookingPage() {
                         {formatLocation(tour.location)}
                       </Badge>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {tour.duration ? `${tour.duration} hours` : 'Various duration'}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                     <div className="flex items-center text-sm text-gray-600">
+                       <Clock className="w-4 h-4 mr-1" />
+                       {tour.duration ? `${tour.duration} hours` : 'Various duration'}
+                     </div>
+
+                     {/* Quick Add to Cart button - light form (date + people) */}
+                     <div className="mt-3 pt-3 border-t">
+                       <Button
+                         size="sm"
+                         className="w-full"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setQuickAddTour(tour);
+                           setQuickAddDate("");
+                           setQuickAddGuests(1);
+                         }}
+                       >
+                         <ShoppingCart className="w-4 h-4 mr-2" />
+                         Add to Cart
+                       </Button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
             )}
           </CardContent>
         </Card>
@@ -430,6 +486,62 @@ export default function TourBookingPage() {
             <p className="text-gray-600">No tours available at the moment.</p>
           </div>
         )}
+
+        {/* Quick Add to Cart Dialog - light selection (date + people only) */}
+        <Dialog open={!!quickAddTour} onOpenChange={(open) => { if (!open) setQuickAddTour(null); }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>
+                Agregar al carrito: {quickAddTour?.name}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="quick-tour-date">Fecha del tour *</Label>
+                <Input
+                  id="quick-tour-date"
+                  type="date"
+                  value={quickAddDate}
+                  onChange={(e) => setQuickAddDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+
+              <GuestCounter
+                value={quickAddGuests}
+                onChange={setQuickAddGuests}
+                min={1}
+                max={20}
+                label="Número de participantes *"
+              />
+
+              {quickAddTour && (
+                <div className="border-t pt-4 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Precio por persona:</span>
+                    <span>{getPriceDisplay(quickAddTour).text}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-base">
+                    <span>Total ({quickAddGuests} {quickAddGuests === 1 ? 'persona' : 'personas'}):</span>
+                    <span className="text-primary">{formatPrice(getPriceDisplay(quickAddTour).value * quickAddGuests)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setQuickAddTour(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleQuickAddToCart} disabled={!quickAddDate}>
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Agregar al carrito y continuar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

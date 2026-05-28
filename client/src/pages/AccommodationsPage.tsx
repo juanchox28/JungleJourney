@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Home, MapPin, Users, Wifi, Utensils } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 export default function AccommodationsPage() {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
@@ -54,22 +55,9 @@ export default function AccommodationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Navigation Breadcrumb */}
-      <div className="bg-white/80 backdrop-blur-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link href="/" className="flex items-center hover:text-primary transition-colors">
-              <Home className="w-4 h-4 mr-1" />
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">Accommodations</span>
-          </nav>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Amazon Accommodations

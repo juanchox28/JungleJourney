@@ -14,6 +14,10 @@ COPY . .
 # Clean previous builds
 RUN rm -rf dist
 
+# Accept VITE_API_BASE_URL as build argument (set by Railway)
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build the application
 RUN npm run build
 

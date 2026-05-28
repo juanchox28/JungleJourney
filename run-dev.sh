@@ -36,29 +36,70 @@ fi
 
 echo "✅ Node.js $NODE_VERSION ready"
 
-# Kill any existing processes on port 5000
-echo "🧹 Cleaning up any existing processes on port 5000..."
-pkill -f "tsx server/index.ts" 2>/dev/null || true
-pkill -f "node.*server/index.ts" 2>/dev/null || true
-pkill -f "npm.*dev" 2>/dev/null || true
+PORTS=(5000 8080)
 
-# Force kill any remaining processes on port 5000
-if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "🔨 Force killing processes on port 5000..."
-    lsof -ti:5000 | xargs kill -9 2>/dev/null || true
-fi
+# --- Aggressive port cleanup ---
+# Uses multiple methods: fuser (via /proc), ss (socket stats), lsof (fallback)
 
-# Wait a moment for processes to terminate
-sleep 3
+free_port() {
+    local PORT=$1
 
-# Check if port 5000 is still in use
-if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "❌ Port 5000 is still in use. Please close other applications using this port."
-    echo "   You can also try: sudo lsof -ti:5000 | xargs kill -9"
-    exit 1
-fi
+    # Method 1: fuser -k (uses /proc, works cross-user on Linux)
+    fuser -k "${PORT}/tcp" 2>/dev/null || true
 
-echo "✅ Port 5000 is now free"
+    # Method 2: ss -> extract PID -> kill by PID (most reliable for detection)
+    PID=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1)
+    if [ -n "$PID" ]; then
+        kill -9 "$PID" 2>/dev/null || true
+        # Also kill the parent tsx watcher if applicable
+        PPID=$(ps -o ppid= -p "$PID" 2>/dev/null | tr -d ' ')
+        [ -n "$PPID" ] && kill -9 "$PPID" 2>/dev/null || true
+    fi
+
+    # Method 3: lsof fallback
+    lsof -ti:"$PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+}
+
+cleanup_ports() {
+    local PORTS=("$@")
+
+    # First pass: kill by process name (handles tsx watchers not bound to any port)
+    pkill -f "tsx.*server/index" 2>/dev/null || true
+    pkill -f "node.*server/index" 2>/dev/null || true
+
+    for PORT in "${PORTS[@]}"; do
+        echo "🧹 Freeing port $PORT..."
+        free_port "$PORT"
+    done
+
+    # Retry loop: wait and verify with ss (up to ~8 seconds)
+    for PORT in "${PORTS[@]}"; do
+        for TRY in $(seq 1 8); do
+            PID=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1)
+            if [ -z "$PID" ]; then
+                break
+            fi
+            echo "⏳ Port $PORT still held by PID $PID (attempt $TRY)..."
+            kill -9 "$PID" 2>/dev/null || true
+            sleep 1
+        done
+    done
+
+    # Final status
+    local any_in_use=0
+    for PORT in "${PORTS[@]}"; do
+        PID=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1)
+        if [ -n "$PID" ]; then
+            echo "⚠️  Port $PORT is still held by PID $PID — server may fail"
+            any_in_use=1
+        else
+            echo "✅ Port $PORT is free"
+        fi
+    done
+    return $any_in_use
+}
+
+cleanup_ports "${PORTS[@]}" || true
 
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then

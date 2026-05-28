@@ -92,6 +92,95 @@ export async function sendConfirmationEmail(booking: BookingData) {
   }
 }
 
+export async function sendNewReservationNotification(data: {
+  reference: string;
+  guestName: string;
+  guestEmail: string;
+  visitDate: string;
+  bookingType: string;
+  totalPrice?: number;
+  itemsSummary?: string;
+}) {
+  try {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (!emailUser || !emailPass) {
+      console.warn('⚠️ Email credentials not configured');
+      return { success: false, error: 'Email credentials not configured' };
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: emailUser, pass: emailPass }
+    });
+
+    const subject = `nueva reserva ${data.guestName} ${data.visitDate}`;
+
+    const mailOptions = {
+      from: emailUser,
+      to: 'amazonaspuertonarino@gmail.com',
+      subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; line-height: 1.5;">
+          <h2 style="color: #1e40af; margin-bottom: 8px;">🆕 Nueva Reserva / New Reservation</h2>
+          <p style="margin: 0 0 16px; color: #374151;">
+            Se ha recibido una nueva reserva. / A new booking has been received.
+          </p>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600; width: 160px;">Referencia / Reference:</td>
+                <td style="padding: 6px 0;"><strong>${data.reference}</strong></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600;">Cliente / Guest:</td>
+                <td style="padding: 6px 0;">${data.guestName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600;">Email del cliente / Guest Email:</td>
+                <td style="padding: 6px 0;">${data.guestEmail}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600;">Fecha de visita / Visit Date:</td>
+                <td style="padding: 6px 0;">${data.visitDate}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600;">Tipo / Type:</td>
+                <td style="padding: 6px 0;">${data.bookingType}</td>
+              </tr>
+              ${data.totalPrice ? `
+              <tr>
+                <td style="padding: 6px 0; font-weight: 600;">Monto Total / Total Amount:</td>
+                <td style="padding: 6px 0;"><strong>$${data.totalPrice.toLocaleString('es-CO')}</strong></td>
+              </tr>` : ''}
+            </table>
+          </div>
+
+          ${data.itemsSummary ? `
+          <div style="margin-bottom: 20px;">
+            <strong style="display:block; margin-bottom: 6px;">Detalle de la reserva / Booking Details:</strong>
+            <pre style="background:#f1f5f9; padding:12px; border-radius:6px; font-size:13px; white-space:pre-wrap; margin:0;">${data.itemsSummary}</pre>
+          </div>` : ''}
+
+          <p style="color:#64748b; font-size:13px; margin-top:24px;">
+            Este es un mensaje automático del sistema de reservas de Paraíso Ayahuasca.<br>
+            This is an automatic message from the Paraíso Ayahuasca booking system.
+          </p>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Nueva reserva notification sent to owner:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error sending new reservation notification:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 export async function sendPaymentFailureNotification(failureData: PaymentFailureData) {
   try {
     const emailUser = process.env.EMAIL_USER;

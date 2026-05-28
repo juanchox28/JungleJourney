@@ -1,8 +1,18 @@
 import type { Tour } from "@shared/schema";
 
 export const parsePrice = (priceStr: string | null | undefined): number => {
-  if (!priceStr || priceStr.trim() === '') return 0;
-  const parsed = parseInt(priceStr);
+  if (!priceStr || typeof priceStr !== 'string' || priceStr.trim() === '') return 0;
+
+  // Remove currency symbols and any non-numeric characters except . and ,
+  let cleaned = priceStr.replace(/[^0-9.,]/g, '').trim();
+
+  if (!cleaned) return 0;
+
+  // Colombian format uses dot (.) as thousand separator.
+  // Remove all dots, then parse the resulting integer.
+  cleaned = cleaned.replace(/\./g, '');
+
+  const parsed = parseInt(cleaned, 10);
   return isNaN(parsed) ? 0 : parsed;
 };
 

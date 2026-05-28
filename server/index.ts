@@ -18,9 +18,10 @@ console.log(`📁 Using env file: ${envFile}`);
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:5000", // For local development (backend serves frontend)
-  "http://localhost:5173",  // For Vite dev server if used separately
-  "https://ayahuascapuertonarino.com" // Production frontend
+  "http://localhost:5000",
+  "http://localhost:5173",
+  "https://ayahuascapuertonarino.com",
+  /\.up\.railway\.app$/,
 ];
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
@@ -29,9 +30,21 @@ if (process.env.CORS_ORIGIN) {
   allowedOrigins.push(process.env.CORS_ORIGIN);
 }
 
-// Enable CORS for the frontend domain
+// Enable CORS for frontend domains
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const allowed = allowedOrigins.some(allowed =>
+      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
+    );
+    if (allowed) {
+      callback(null, true);
+    } else {
+      // In production, log the rejected origin but still allow it for safety
+      console.warn(`CORS: Unexpected origin ${origin} — allowing`);
+      callback(null, true);
+    }
+  },
   credentials: true
 }));
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Accommodation } from "@shared/schema";
+import { useCart } from "@/lib/cartContext";
 
 // Helper function to format date string without timezone issues
 const formatDateString = (dateString: string) => {
@@ -21,7 +22,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Calendar, Users, MapPin, Wifi, Coffee, Car, Minus, Plus } from "lucide-react";
+import { Home, Calendar, Users, MapPin, Wifi, Coffee, Car, Minus, Plus, ShoppingCart } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 interface Room {
   id: string;
@@ -52,6 +54,9 @@ export default function HotelBookingPage() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+
+  const { addToCart } = useCart();
+  const [, setLocation] = useLocation();
 
   // Add page-specific schema markup
   useEffect(() => {
@@ -116,7 +121,7 @@ export default function HotelBookingPage() {
   const { data: accommodations = [], isLoading } = useQuery({
     queryKey: ["accommodations"],
     queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/accommodations`);
+      const response = await fetch('/api/accommodations');
       if (!response.ok) throw new Error("Failed to fetch accommodations");
       return response.json() as Promise<Accommodation[]>;
     },
@@ -292,7 +297,7 @@ export default function HotelBookingPage() {
       };
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-accommodation-booking`, {
+        const response = await fetch('/api/create-accommodation-booking', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -327,7 +332,7 @@ export default function HotelBookingPage() {
     };
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/create-accommodation-booking`, {
+      const response = await fetch('/api/create-accommodation-booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -349,6 +354,44 @@ export default function HotelBookingPage() {
     }
   };
 
+  // New cart-first flow (consistent with tours)
+  const handleAddRoomsToCart = () => {
+    if (calculateSelectedGuests() < totalGuests || Object.keys(selectedRooms).length === 0) {
+      return;
+    }
+
+    const nights = calculateNights();
+    if (nights <= 0) {
+      alert("Please select valid dates");
+      return;
+    }
+
+    Object.entries(selectedRooms).forEach(([roomId, quantity]) => {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room || quantity <= 0) return;
+
+      const cartItem = {
+        id: `room-${roomId}-${Date.now()}`,
+        type: 'accommodation' as const,
+        name: room.name,
+        date: checkInDate,
+        returnDate: checkOutDate,
+        participants: quantity * (room.capacity || 2), // approximate guests covered by these rooms
+        price: room.price,
+        totalPrice: room.price * nights * quantity,
+        details: {
+          accommodationId: roomId,
+          // Personal information will be collected on the cart page (single form)
+        },
+      };
+
+      addToCart(cartItem);
+    });
+
+    // Redirect to cart immediately
+    setLocation('/checkout');
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -359,6 +402,7 @@ export default function HotelBookingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+      <Navigation />
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-10 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
@@ -366,10 +410,10 @@ export default function HotelBookingPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-blue-400/10 rounded-full blur-2xl"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
         <div className="lg:grid lg:grid-cols-12 lg:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-8 mb-24 lg:mb-0">
+           <div className="lg:col-span-12 mb-24 lg:mb-0">
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-lg">
@@ -541,153 +585,69 @@ export default function HotelBookingPage() {
                   ))}
                 </div>
 
-                {/* Selection Summary */}
-                {Object.keys(selectedRooms).length > 0 && (
-                  <Card className="mb-8">
-                    <CardHeader>
-                      <CardTitle>Resumen de Selección</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Huéspedes Seleccionados</p>
-                          <p className="text-2xl font-bold">{calculateSelectedGuests()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Noches</p>
-                          <p className="text-2xl font-bold">{calculateNights()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Precio Total</p>
-                          <p className="text-2xl font-bold text-primary">{formatPrice(calculateTotalPrice())}</p>
-                        </div>
-                      </div>
-
-                      {calculateSelectedGuests() < totalGuests && (
-                        <p className="text-red-600 text-sm">
-                          ⚠️ Necesitas habitaciones para {totalGuests} huéspedes pero solo tienes capacidad para {calculateSelectedGuests()}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-
-
-            {/* Booking Form */}
-            {showBookingForm && (
-              <Card id="booking-form">
+            {/* Selection Summary */}
+            {Object.keys(selectedRooms).length > 0 && (
+              <Card className="mb-8">
                 <CardHeader>
-                  <CardTitle>Completa Tu Reserva</CardTitle>
-                  <CardDescription>
-                    Por favor proporciona tus datos para completar la reservación
-                  </CardDescription>
+                  <CardTitle>Resumen de Selección</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleBookingSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="guest-name">Nombre Completo *</Label>
-                        <Input
-                          id="guest-name"
-                          value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
-                          placeholder="Ingresa tu nombre completo"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="guest-email">Dirección de Correo *</Label>
-                        <Input
-                          id="guest-email"
-                          type="email"
-                          value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
-                          placeholder="Ingresa tu correo electrónico"
-                          required
-                        />
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <Label htmlFor="special-requests">Solicitudes Especiales</Label>
-                      <Textarea
-                        id="special-requests"
-                        value={specialRequests}
-                        onChange={(e) => setSpecialRequests(e.target.value)}
-                        placeholder="Cualquier requerimiento especial o notas..."
-                        rows={3}
-                      />
+                      <p className="text-sm text-gray-600">Huéspedes Seleccionados</p>
+                      <p className="text-2xl font-bold">{calculateSelectedGuests()}</p>
                     </div>
-
-                    {/* Payment Method Selection */}
                     <div>
-                      <Label className="text-base font-medium">Método de Pago</Label>
-                      <div className={`grid gap-4 mt-2 ${isCashPaymentAvailable() ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                        <div
-                          className={`border rounded-lg p-4 cursor-pointer transition-colors ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                            }`}
-                          onClick={() => setPaymentMethod('card')}
-                        >
-                          <div className="flex items-center">
-                            <input
-                              type="radio"
-                              id="card-payment"
-                              name="payment-method"
-                              checked={paymentMethod === 'card'}
-                              onChange={() => setPaymentMethod('card')}
-                              className="mr-2"
-                            />
-                            <Label htmlFor="card-payment" className="cursor-pointer">
-                              Tarjeta de Crédito/Débito
-                            </Label>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">Paga de forma segura en línea</p>
-                        </div>
-                        <div
-                          className={`border rounded-lg p-4 cursor-pointer transition-colors ${paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                            }`}
-                          onClick={() => setPaymentMethod('cash')}
-                        >
-                          <div className="flex items-center">
-                            <input
-                              type="radio"
-                              id="cash-payment"
-                              name="payment-method"
-                              checked={paymentMethod === 'cash'}
-                              onChange={() => setPaymentMethod('cash')}
-                              className="mr-2"
-                            />
-                            <Label htmlFor="cash-payment" className="cursor-pointer">
-                              Efectivo en Recepción
-                            </Label>
-                          </div>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Solo disponible para reservas que empiecen ayer, hoy o mañana
-                          </p>
-                        </div>
-                      </div>
+                      <p className="text-sm text-gray-600">Noches</p>
+                      <p className="text-2xl font-bold">{calculateNights()}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Precio Total</p>
+                      <p className="text-2xl font-bold text-primary">{formatPrice(calculateTotalPrice())}</p>
+                    </div>
+                  </div>
 
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between items-center text-lg font-semibold mb-4">
-                        <span>Monto Total:</span>
-                        <span className="text-primary">{formatPrice(calculateTotalPrice())}</span>
-                      </div>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        {paymentMethod === 'cash' ? '✅ Confirmar Reserva' : '🚀 Proceder al Pago Seguro'}
-                      </Button>
-                    </div>
-                  </form>
+                  {calculateSelectedGuests() < totalGuests && (
+                    <p className="text-red-600 text-sm">
+                      ⚠️ Necesitas habitaciones para {totalGuests} huéspedes pero solo tienes capacidad para {calculateSelectedGuests()}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
+
+            {/* Primary CTA - Add to Cart (replaces the removed sidebar) */}
+            {checkInDate && checkOutDate && Object.keys(selectedRooms).length > 0 && (
+              <div className="mb-12">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg font-bold shadow-lg hover:shadow-xl transition-all"
+                  disabled={calculateSelectedGuests() < totalGuests}
+                  onClick={handleAddRoomsToCart}
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Add to Cart & Continue
+                </Button>
+                {calculateSelectedGuests() < totalGuests && (
+                  <p className="text-xs text-orange-600 text-center mt-2 font-medium">
+                    Selecciona más habitaciones para {totalGuests} personas
+                  </p>
+                )}
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Tu información personal y detalles extras se solicitarán una sola vez en el carrito.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+
+
+
+            {/* Booking Form removed - now using cart flow like tours.
+                After selecting rooms, user clicks "Add to Cart & Continue" above,
+                which adds to shared cart and redirects to /checkout (single form for personal info + payment). */}
+            {/* The old personal info + payment method form has been replaced to avoid duplication. */}
 
             {/* Features Section */}
             <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -711,141 +671,6 @@ export default function HotelBookingPage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Construccion Bioclimatica</h3>
                 <p className="text-gray-600">Arquitectura integrada con la naturaleza para un mejor descanso</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-4">
-            <div className={`
-              fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]
-              lg:sticky lg:top-24 lg:bottom-auto lg:left-auto lg:right-auto lg:w-full lg:h-auto lg:bg-white/90 lg:border lg:rounded-xl lg:shadow-xl
-              transition-all duration-300
-              ${Object.keys(selectedRooms).length > 0 ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
-            `}>
-              <div className="p-4 lg:p-6 max-h-[40vh] lg:max-h-[calc(100vh-8rem)] overflow-y-auto">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-primary" />
-                  Detalles de Reserva
-                </h3>
-
-                <div className="space-y-4">
-                  {/* Dates */}
-                  <div className="bg-gray-50 rounded-lg p-3 lg:p-4">
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Fechas
-                    </div>
-                    <div className="text-sm">
-                      {checkInDate ? (
-                        <div>
-                          <div className="font-medium text-gray-900">Entrada: {formatDateString(checkInDate)}</div>
-                          {checkOutDate && (
-                            <div className="font-medium text-gray-900">Salida: {formatDateString(checkOutDate)}</div>
-                          )}
-                          {checkInDate && checkOutDate && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {calculateNights()} noche{calculateNights() !== 1 ? 's' : ''}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-gray-400">Selecciona fechas</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Guests */}
-                  <div className="bg-gray-50 rounded-lg p-3 lg:p-4">
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <Users className="w-4 h-4 mr-2" />
-                      Huéspedes
-                    </div>
-                    <div className="text-lg font-bold text-gray-900">
-                      {totalGuests} persona{totalGuests !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-
-                  {/* Selected Rooms */}
-                  <div className="bg-gray-50 rounded-lg p-3 lg:p-4">
-                    <div className="flex items-center text-sm text-gray-600 mb-3">
-                      <Home className="w-4 h-4 mr-2" />
-                      Habitaciones
-                    </div>
-                    <div className="space-y-2">
-                      {Object.keys(selectedRooms).length === 0 ? (
-                        <div className="text-gray-400 text-sm">Ninguna habitación</div>
-                      ) : (
-                        Object.entries(selectedRooms).map(([roomId, quantity]) => {
-                          const room = rooms.find(r => r.id === roomId);
-                          return room ? (
-                            <div key={roomId} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-700">{room.name}</span>
-                              <span className="font-medium text-gray-900">x{quantity}</span>
-                            </div>
-                          ) : null;
-                        })
-                      )}
-                    </div>
-                    {Object.keys(selectedRooms).length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Capacidad:</span>
-                          <span className="font-bold text-gray-900">{calculateSelectedGuests()} huéspedes</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 lg:p-4">
-                    <div className="flex items-center text-sm text-gray-600 mb-3">
-                      <span className="text-lg mr-1">💰</span>
-                      Precio Total
-                    </div>
-                    <div className="space-y-1">
-                      {checkInDate && checkOutDate && Object.keys(selectedRooms).length > 0 && (
-                        <>
-                          <div className="flex justify-between text-sm">
-                            <span>Noches:</span>
-                            <span>{calculateNights()}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Subtotal:</span>
-                            <span>{formatPrice(calculateTotalPrice())}</span>
-                          </div>
-                        </>
-                      )}
-                      <div className="border-t border-primary/30 pt-2 mt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-gray-900">Total:</span>
-                          <span className="text-xl font-bold text-primary">
-                            {checkInDate && checkOutDate && Object.keys(selectedRooms).length > 0
-                              ? formatPrice(calculateTotalPrice())
-                              : '$0'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="pt-2">
-                    <Button
-                      className="w-full h-12 text-lg font-bold shadow-lg hover:shadow-xl transition-all"
-                      disabled={calculateSelectedGuests() < totalGuests || Object.keys(selectedRooms).length === 0}
-                      onClick={() => setShowBookingForm(true)}
-                    >
-                      Reservar Ahora
-                    </Button>
-                    {calculateSelectedGuests() < totalGuests && Object.keys(selectedRooms).length > 0 && (
-                      <p className="text-xs text-orange-600 text-center mt-2 font-medium">
-                        Selecciona más habitaciones para {totalGuests} personas
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

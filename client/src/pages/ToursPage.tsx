@@ -6,15 +6,39 @@ import TourCard from "@/components/TourCard";
 import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
 import { formatLocation, getPriceDisplay, formatDuration } from "@/lib/tourUtils";
-import { getApiUrl } from "@/lib/utils";
 import { Home } from "lucide-react";
 import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
 import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
 import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
 
-const getImageForTour = (tour: Tour, index: number) => {
-  const images = [jaguarImage, dolphinImage, canoeImage];
-  return images[index % images.length];
+const getImageForTour = (tour: Tour, fallbackIndex = 0): string => {
+  // If the tour has an images field in the JSON, use it
+  if (tour.images && tour.images.trim() !== '') {
+    const img = tour.images.trim();
+
+    // If it's a JSON array string like '["img1.jpg", "img2.jpg"]'
+    if (img.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(img);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = String(parsed[0]);
+          return first.startsWith('http') ? first : `/images/tours/${first}`;
+        }
+      } catch {
+        // fall through to treat as plain string
+      }
+    }
+
+    // Plain string or filename
+    return img.startsWith('http') ? img : `/images/tours/${img}`;
+  }
+
+  // Fallback: cycle through the 3 default images
+  const fallbackImages = [jaguarImage, dolphinImage, canoeImage];
+  const stableIndex = tour.id
+    ? parseInt(tour.id.replace(/\D/g, '').slice(-1) || '0', 10)
+    : fallbackIndex;
+  return fallbackImages[stableIndex % fallbackImages.length];
 };
 
 export default function ToursPage() {
@@ -32,7 +56,7 @@ export default function ToursPage() {
       if (locationFilter) {
         params.set('location', locationFilter);
       }
-      const response = await fetch(getApiUrl(`/api/tours?${params}`));
+      const response = await fetch(`/api/tours?${params}`);
       if (!response.ok) throw new Error('Failed to fetch tours');
       const allTours = await response.json();
       // If we're on the boat tickets page, filter for transfers only

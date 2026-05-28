@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, User, Moon, Sun, Languages } from "lucide-react";
+import { Leaf, Menu, User, Moon, Sun, Languages, ShoppingCart } from "lucide-react";
+import { useCart } from "@/lib/cartContext";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -28,6 +29,7 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
   const [scrolled, setScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [currentLang, setCurrentLang] = useState('es');
+  const { getTotalItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,6 +89,12 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
             >
               Rooms
             </Link>
+            <Link
+              href="/tour-booking"
+              className={`${textClass} hover:text-primary transition-colors font-medium`}
+            >
+              Tours
+            </Link>
             <button
               data-testid="link-about"
               className={`${textClass} hover:text-primary transition-colors font-medium`}
@@ -142,6 +150,22 @@ export default function Navigation({ transparent = false, onMenuClick }: Navigat
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
+            <Link href="/checkout" className="relative">
+              <Button
+                data-testid="button-cart"
+                variant="ghost"
+                size="icon"
+                className={transparent && !scrolled ? "text-white hover:text-white" : ""}
+                aria-label="View cart"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {getTotalItems() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {getTotalItems()}
+                  </span>
+                )}
+              </Button>
+            </Link>
             <Button
               data-testid="button-user"
               variant="ghost"

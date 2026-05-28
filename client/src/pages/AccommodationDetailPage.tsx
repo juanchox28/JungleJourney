@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { Accommodation } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -7,24 +7,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import GuestCounter from "@/components/GuestCounter";
+
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Home, MapPin, Users, Wifi, Utensils, Calendar as CalendarIcon, ArrowLeft } from "lucide-react";
+import { Home, MapPin, Users, Wifi, Utensils, Calendar as CalendarIcon, ArrowLeft, ShoppingCart } from "lucide-react";
+import { useCart } from "@/lib/cartContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function AccommodationDetailPage() {
   const [match, params] = useRoute("/accommodation/:id");
   const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
+  const { addToCart } = useCart();
 
   const [checkInDate, setCheckInDate] = useState<Date>();
   const [checkOutDate, setCheckOutDate] = useState<Date>();
   const [guestCount, setGuestCount] = useState(1);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [specialRequests, setSpecialRequests] = useState("");
 
   const { data: accommodation, isLoading } = useQuery({
     queryKey: ["accommodation", params?.id],
@@ -36,27 +35,7 @@ export default function AccommodationDetailPage() {
     enabled: !!params?.id,
   });
 
-  const bookingMutation = useMutation({
-    mutationFn: async (bookingData: any) => {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingData),
-      });
-      if (!response.ok) throw new Error("Failed to create booking");
-      return response.json();
-    },
-    onSuccess: () => {
-      alert("Booking created successfully!");
-      // Reset form
-      setCheckInDate(undefined);
-      setCheckOutDate(undefined);
-      setGuestCount(1);
-      setGuestName("");
-      setGuestEmail("");
-      setSpecialRequests("");
-    },
-  });
+  // Old direct booking mutation removed - rooms now go through cart like tours
 
   const formatPrice = (price: string) => {
     return new Intl.NumberFormat('es-CO', {
@@ -81,48 +60,36 @@ export default function AccommodationDetailPage() {
     return parseInt(accommodation.pricePerNight) * nights;
   };
 
-  const handleBooking = () => {
-    if (!accommodation || !checkInDate || !checkOutDate || !guestName || !guestEmail) {
-      alert("Please fill in all required fields");
-      return;
-    }
+  // Old direct handleBooking removed — rooms now use cart flow (same as tours)
 
-    if (guestCount > (accommodation.maxGuests || 0)) {
-      alert(`Maximum ${accommodation.maxGuests} guests allowed`);
+  // New cart-first flow: Book room → add to cart → redirect to cart (to add more or pay now)
+  const handleAddRoomToCart = () => {
+    if (!accommodation || !checkInDate || !checkOutDate) {
+      alert("Please select check-in and check-out dates and number of guests");
       return;
     }
 
     const totalPrice = calculateTotalPrice();
+    const checkInStr = checkInDate.toISOString().split('T')[0];
+    const checkOutStr = checkOutDate.toISOString().split('T')[0];
 
-    // Use the new Wompi payment endpoint
-    fetch('/api/create-accommodation-booking', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        guestName,
-        guestEmail,
-        guestCount,
-        checkInDate: checkInDate.toISOString().split('T')[0],
-        checkOutDate: checkOutDate.toISOString().split('T')[0],
+    const cartItem = {
+      id: `accommodation-${accommodation.id}-${Date.now()}`,
+      type: 'accommodation' as const,
+      name: accommodation.name,
+      date: checkInStr,
+      returnDate: checkOutStr,
+      participants: guestCount,
+      price: parseInt(accommodation.pricePerNight || '0'),
+      totalPrice,
+      details: {
         accommodationId: accommodation.id,
-        totalPrice,
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.ok && data.checkout_url) {
-        // Redirect to Wompi payment page
-        window.location.href = data.checkout_url;
-      } else {
-        alert('Error creating booking: ' + (data.error || 'Unknown error'));
-      }
-    })
-    .catch(error => {
-      console.error('Booking error:', error);
-      alert('Error creating booking. Please try again.');
-    });
+        // Personal info collected at the end on the cart page before payment
+      },
+    };
+
+    addToCart(cartItem);
+    setLocation('/checkout');
   };
 
   if (isLoading) {
@@ -289,53 +256,14 @@ export default function AccommodationDetailPage() {
                 </div>
 
                 {/* Guest Count */}
-                <div>
-                  <Label htmlFor="guests">Number of Guests</Label>
-                  <Input
-                    id="guests"
-                    type="number"
-                    min="1"
-                    max={accommodation.maxGuests || 10}
-                    value={guestCount}
-                    onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)}
-                  />
-                </div>
-
-                {/* Guest Name */}
-                <div>
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                {/* Guest Email */}
-                <div>
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    placeholder="Enter your email"
-                  />
-                </div>
-
-                {/* Special Requests */}
-                <div>
-                  <Label htmlFor="requests">Special Requests</Label>
-                  <Textarea
-                    id="requests"
-                    value={specialRequests}
-                    onChange={(e) => setSpecialRequests(e.target.value)}
-                    placeholder="Any special requests or notes..."
-                    rows={3}
-                  />
-                </div>
-
+                <GuestCounter
+                  value={guestCount}
+                  onChange={setGuestCount}
+                  min={1}
+                  max={accommodation?.maxGuests || 10}
+                  label="Number of Guests"
+                />
+ 
                 {/* Total Price */}
                 {checkInDate && checkOutDate && (
                   <div className="border-t pt-4">
@@ -350,14 +278,17 @@ export default function AccommodationDetailPage() {
                     </p>
                   </div>
                 )}
-
+ 
                 <Button
-                  onClick={handleBooking}
+                  onClick={handleAddRoomToCart}
                   className="w-full"
-                  disabled={bookingMutation.isPending}
                 >
-                  {bookingMutation.isPending ? "Creating Booking..." : "Book Now"}
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Add to Cart
                 </Button>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  All personal information collected once on the cart page before payment.
+                </p>
               </CardContent>
             </Card>
           </div>

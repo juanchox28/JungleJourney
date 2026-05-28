@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import TourDetail from "@/components/TourDetail";
-import { getApiUrl } from "@/lib/utils";
+import GuestCounter from "@/components/GuestCounter";
+import { useCart } from "@/lib/cartContext";
+
 import ReviewCard from "@/components/ReviewCard";
 import type { Tour } from "@shared/schema";
 import { getPriceDisplay, formatLocation } from "@/lib/tourUtils";
-import { Home, ArrowLeft, Calendar, Users, Mail, User } from "lucide-react";
+import { Home, ArrowLeft, Calendar, Users, Mail, User, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,14 +81,14 @@ export default function TourDetailPage() {
 
   const [tourDate, setTourDate] = useState<Date>();
   const [guestCount, setGuestCount] = useState(1);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [specialRequests, setSpecialRequests] = useState("");
+
+  const { addToCart, getTotalItems } = useCart();
+  const [, setLocation] = useLocation();
 
   const { data: tour, isLoading, error } = useQuery<Tour>({
     queryKey: ['/api/tours', tourId],
     queryFn: async () => {
-      const response = await fetch(getApiUrl(`/api/tours/${tourId}`));
+      const response = await fetch(`/api/tours/${tourId}`);
       if (!response.ok) throw new Error('Failed to fetch tour');
       return response.json();
     },
@@ -103,42 +105,45 @@ export default function TourDetailPage() {
     return priceInfo.value * guestCount;
   };
 
-  const handleTourBooking = () => {
-    if (!tour || !tourDate || !guestName || !guestEmail) {
-      alert("Please fill in all required fields");
+  const handleAddToCart = () => {
+    if (!tour || !tourDate) {
+      alert("Please select a date and number of participants");
+      return;
+    }
+
+    // Check advance booking time (same logic as direct book)
+    const bookingAdvanceHours = (tour as any).bookingAdvanceHours ?? 24;
+    const selectedDateTime = new Date(tourDate);
+    const now = new Date();
+    const hoursDifference = (selectedDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDifference < bookingAdvanceHours) {
+      alert(`This tour requires booking at least ${bookingAdvanceHours} hours in advance. Please select a later date.`);
       return;
     }
 
     const totalPrice = calculateTourPrice();
+    const dateStr = tourDate.toISOString().split('T')[0];
 
-    // Use the new tour booking endpoint
-    fetch('/api/create-tour-booking', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        guestName,
-        guestEmail,
-        guestCount,
-        tourDate: tourDate.toISOString().split('T')[0],
+    // Lightweight cart item — personal info & extras collected later on the cart page before payment
+    const cartItem = {
+      id: `tour-${tour.id}-${Date.now()}`,
+      type: 'tour' as const,
+      name: tour.name,
+      date: dateStr,
+      participants: guestCount,
+      price: getPriceDisplay(tour).value,
+      totalPrice,
+      details: {
         tourId: tour.id,
-        totalPrice,
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.ok && data.checkout_url) {
-        // Redirect to Wompi payment page
-        window.location.href = data.checkout_url;
-      } else {
-        alert('Error creating booking: ' + (data.error || 'Unknown error'));
-      }
-    })
-    .catch(error => {
-      console.error('Booking error:', error);
-      alert('Error creating booking. Please try again.');
-    });
+        // Personal info (name, email, footSize, dietary, specialRequests) will be collected on the cart/checkout page
+      },
+    };
+
+    addToCart(cartItem);
+
+    // Redirect to cart — all personal information asked once at the end before payment
+    setLocation('/checkout');
   };
 
   if (isLoading) {
@@ -212,7 +217,7 @@ export default function TourDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Tour Date */}
+                {/* Tour Date - only dates and people at selection time */}
                 <div>
                   <Label htmlFor="tour-date">Tour Date *</Label>
                   <Popover>
@@ -239,55 +244,16 @@ export default function TourDetailPage() {
                     </PopoverContent>
                   </Popover>
                 </div>
-
-                {/* Guest Count */}
-                <div>
-                  <Label htmlFor="guests">Number of Participants *</Label>
-                  <Input
-                    id="guests"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={guestCount}
-                    onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)}
-                  />
-                </div>
-
-                {/* Guest Name */}
-                <div>
-                  <Label htmlFor="guest-name">Full Name *</Label>
-                  <Input
-                    id="guest-name"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                {/* Guest Email */}
-                <div>
-                  <Label htmlFor="guest-email">Email Address *</Label>
-                  <Input
-                    id="guest-email"
-                    type="email"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    placeholder="Enter your email"
-                  />
-                </div>
-
-                {/* Special Requests */}
-                <div>
-                  <Label htmlFor="requests">Special Requests</Label>
-                  <Textarea
-                    id="requests"
-                    value={specialRequests}
-                    onChange={(e) => setSpecialRequests(e.target.value)}
-                    placeholder="Any special requirements or notes..."
-                    rows={3}
-                  />
-                </div>
-
+ 
+                {/* Number of Participants */}
+                <GuestCounter
+                  value={guestCount}
+                  onChange={setGuestCount}
+                  min={1}
+                  max={10}
+                  label="Number of Participants *"
+                />
+ 
                 {/* Price Summary */}
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-semibold mb-2">
@@ -299,14 +265,20 @@ export default function TourDetailPage() {
                     <span className="text-primary">${calculateTourPrice().toLocaleString()}</span>
                   </div>
                 </div>
-
-                <Button
-                  onClick={handleTourBooking}
-                  className="w-full"
-                  size="lg"
-                >
-                  Book Tour Now
-                </Button>
+ 
+                <div className="pt-2">
+                  <Button
+                    onClick={handleAddToCart}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Add to Cart
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    All personal information and extra details (name, email, foot size, dietary, special requests) will be collected once on the cart page before payment.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>

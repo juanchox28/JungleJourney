@@ -6,7 +6,7 @@ import { execSync } from "child_process";
 import path from "path";
 import multer from "multer";
 import fetch from "node-fetch";
-import { sendConfirmationEmail, sendPaymentFailureNotification } from "./emailService.js";
+import { sendConfirmationEmail, sendPaymentFailureNotification, sendNewReservationNotification } from "./emailService.js";
 // import sharp from "sharp";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -351,6 +351,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "payment_pending"
         };
 
+        // Notify owner
+        try {
+          await sendNewReservationNotification({
+            reference,
+            guestName,
+            guestEmail,
+            visitDate: tourDate,
+            bookingType: 'Tour',
+            totalPrice: parseFloat(totalPrice)
+          });
+        } catch (e) {
+          console.error('Error sending owner notification for tour:', e);
+        }
+
         res.json({
           ok: true,
           booking: updatedBooking,
@@ -533,8 +547,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "payment_pending"
         };
 
-        // Update booking with payment info
-        // Note: In a real implementation, you'd update the database record here
+        // Notify owner
+        try {
+          const visitDate = `${checkInDate} - ${checkOutDate}`;
+          await sendNewReservationNotification({
+            reference,
+            guestName,
+            guestEmail,
+            visitDate,
+            bookingType: 'Alojamiento',
+            totalPrice: parseFloat(totalPrice)
+          });
+        } catch (e) {
+          console.error('Error sending owner notification for accommodation:', e);
+        }
 
         res.json({
           ok: true,
@@ -795,6 +821,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bookingData.tourId = item.details.tourId;
           bookingData.tourDate = item.date;
           bookingData.participants = JSON.stringify(item.details.participants);
+        } else if (item.type === 'accommodation') {
+          bookingData.accommodationId = item.details.accommodationId;
+          bookingData.checkInDate = item.date;
+          bookingData.checkOutDate = item.returnDate;
+          bookingData.participants = item.participants;
         } else if (item.type === 'transfer') {
           bookingData.tourId = item.details.routeId;
           bookingData.tourDate = item.date;
@@ -836,6 +867,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const booking of bookings) {
           booking.wompiPaymentId = wompiData.data.id;
           booking.checkoutUrl = `https://checkout.wompi.co/l/${wompiData.data.id}`;
+        }
+
+        // Notify owner of new reservation(s)
+        try {
+          const firstItem = items[0];
+          const visitDate = firstItem?.date || firstItem?.returnDate || new Date().toISOString().split('T')[0];
+          const itemsSummary = items.map((it: any) => 
+            `${it.type.toUpperCase()}: ${it.name} - ${it.date} (${it.participants} pax) - $${it.totalPrice}`
+          ).join('\n');
+
+          await sendNewReservationNotification({
+            reference,
+            guestName,
+            guestEmail,
+            visitDate,
+            bookingType: `Carrito (${items.length} items)`,
+            totalPrice: parseFloat(totalPrice),
+            itemsSummary
+          });
+        } catch (e) {
+          console.error('Error sending owner notification for cart:', e);
         }
 
         res.json({

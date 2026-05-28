@@ -1,13 +1,22 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "wouter";
+import { useEffect } from 'react';
+import { useMemo } from 'react';
+
+import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import TourCard from "@/components/TourCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Users, Calendar, Minus, Plus } from "lucide-react";
+import { Users, Calendar, Minus, Plus, MapPin, Leaf, Home as HomeIcon, Ship } from "lucide-react";
 import heroImage from '@assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png';
+import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
+import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
+import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
+import type { Tour } from "@shared/schema";
+import { formatLocation, getPriceDisplay, formatDuration } from "@/lib/tourUtils";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -15,6 +24,66 @@ export default function HomePage() {
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
   const [guests, setGuests] = useState(2);
+
+  const { data: tours } = useQuery<Tour[]>({
+    queryKey: ['/api/tours'],
+    queryFn: async () => {
+      const response = await fetch('/api/tours');
+      if (!response.ok) throw new Error('Failed to fetch tours');
+      return response.json();
+    },
+  });
+
+  const leticiaTours = useMemo(() => {
+    return (tours ?? []).filter((tour) => {
+      const loc = (tour.location || '').toLowerCase();
+      return loc.includes('leticia');
+    }).slice(0, 4);
+  }, [tours]);
+
+  const puertoNarinoTours = useMemo(() => {
+    return (tours ?? []).filter((tour) => {
+      const loc = (tour.location || '').toLowerCase();
+      return loc.includes('puerto narino') || loc.includes('puerto-narino');
+    }).slice(0, 4);
+  }, [tours]);
+
+
+
+  const getImageForTour = (tour: Tour, fallbackIndex = 0): string => {
+    // If the tour has an images field in the JSON, use it
+    if (tour.images && tour.images.trim() !== '') {
+      const img = tour.images.trim();
+
+      // If it's a JSON array string like '["img1.jpg", "img2.jpg"]'
+      if (img.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(img);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const first = String(parsed[0]);
+            return first.startsWith('http') ? first : `/images/tours/${first}`;
+          }
+        } catch {
+          // fall through to treat as plain string
+        }
+      }
+
+      // Plain string or filename
+      return img.startsWith('http') ? img : `/images/tours/${img}`;
+    }
+
+    // Fallback: cycle through the 3 default images
+    const fallbackImages = [jaguarImage, dolphinImage, canoeImage];
+    // Use tour id for stable rotation if possible
+    const stableIndex = tour.id
+      ? parseInt(tour.id.replace(/\D/g, '').slice(-1) || '0', 10)
+      : fallbackIndex;
+    return fallbackImages[stableIndex % fallbackImages.length];
+  };
+
+  const handleTourClick = (id: string) => {
+    setLocation(`/tour/${id}`);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +200,150 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Tours by Destination Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-4xl font-bold mb-4">Tours por Destino</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Explora nuestras experiencias en Leticia, Puerto Nariño y Mocagua — los tres principales destinos del Amazonas colombiano
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+            {/* Leticia */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Ship className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-2xl font-bold">Leticia</h3>
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Entrada al Amazonas</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/tours?location=leticia')}
+                >
+                  Ver todos
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {leticiaTours.length > 0 ? (
+                  leticiaTours.map((tour, index) => (
+                    <TourCard
+                      key={tour.id}
+                      id={tour.id}
+                      image={getImageForTour(tour, index)}
+                      title={tour.name}
+                      description={tour.detalle || tour.description || ''}
+                      duration={formatDuration(tour.duration)}
+                      difficulty="Moderate"
+                      priceDisplay={getPriceDisplay(tour).text}
+                      location={formatLocation(tour.location)}
+                      rating={4.7}
+                      reviews={50}
+                      groupSize="2-6"
+                      onClick={handleTourClick}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground text-sm">Cargando tours de Leticia...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Puerto Nariño */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <HomeIcon className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-2xl font-bold">Puerto Nariño</h3>
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">Pueblo Amazónico</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/tours?location=puerto-narino')}
+                >
+                  Ver todos
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {puertoNarinoTours.length > 0 ? (
+                  puertoNarinoTours.map((tour, index) => (
+                    <TourCard
+                      key={tour.id}
+                      id={tour.id}
+                      image={getImageForTour(tour, index)}
+                      title={tour.name}
+                      description={tour.detalle || tour.description || ''}
+                      duration={formatDuration(tour.duration)}
+                      difficulty="Moderate"
+                      priceDisplay={getPriceDisplay(tour).text}
+                      location={formatLocation(tour.location)}
+                      rating={4.7}
+                      reviews={50}
+                      groupSize="2-6"
+                      onClick={handleTourClick}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground text-sm">Cargando tours de Puerto Nariño...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Mocagua */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <Leaf className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-2xl font-bold">Mocagua</h3>
+                    <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Vida Silvestre</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/tours?location=mocagua')}
+                >
+                  Ver todos
+                </Button>
+              </div>
+
+
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Button
+              size="lg"
+              onClick={() => setLocation('/tours')}
+              className="bg-primary hover:bg-primary/90 text-white font-bold text-lg px-8"
+            >
+              Ver Todos los Tours
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -179,6 +392,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
