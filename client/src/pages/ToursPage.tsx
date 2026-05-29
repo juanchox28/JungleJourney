@@ -7,39 +7,7 @@ import Navigation from "@/components/Navigation";
 import type { Tour } from "@shared/schema";
 import { formatLocation, getPriceDisplay, formatDuration } from "@/lib/tourUtils";
 import { Home } from "lucide-react";
-import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
-import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
-import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
-
-const getImageForTour = (tour: Tour, fallbackIndex = 0): string => {
-  // If the tour has an images field in the JSON, use it
-  if (tour.images && tour.images.trim() !== '') {
-    const img = tour.images.trim();
-
-    // If it's a JSON array string like '["img1.jpg", "img2.jpg"]'
-    if (img.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(img);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const first = String(parsed[0]);
-          return first.startsWith('http') ? first : `/images/tours/${first}`;
-        }
-      } catch {
-        // fall through to treat as plain string
-      }
-    }
-
-    // Plain string or filename
-    return img.startsWith('http') ? img : `/images/tours/${img}`;
-  }
-
-  // Fallback: cycle through the 3 default images
-  const fallbackImages = [jaguarImage, dolphinImage, canoeImage];
-  const stableIndex = tour.id
-    ? parseInt(tour.id.replace(/\D/g, '').slice(-1) || '0', 10)
-    : fallbackIndex;
-  return fallbackImages[stableIndex % fallbackImages.length];
-};
+import { getImageForTour, handleImageError } from "@/lib/imageUtils";
 
 export default function ToursPage() {
   const [, setLocation] = useLocation();
@@ -128,6 +96,7 @@ export default function ToursPage() {
                 reviews={50}
                 groupSize="2-6"
                 onClick={handleTourClick}
+                onImageError={handleImageError}
               />
             ))
           ) : (

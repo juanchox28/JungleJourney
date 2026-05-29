@@ -12,11 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Users, Calendar, Minus, Plus, MapPin, Leaf, Home as HomeIcon, Ship } from "lucide-react";
 import heroImage from '@assets/generated_images/Amazon_canopy_sunlight_hero_975fbf35.png';
-import jaguarImage from '@assets/generated_images/Amazon_jaguar_wildlife_encounter_30857d91.png';
-import dolphinImage from '@assets/generated_images/Pink_dolphins_Amazon_sunset_d0aee95e.png';
-import canoeImage from '@assets/generated_images/Canoe_Amazon_river_dawn_94feb359.png';
 import type { Tour } from "@shared/schema";
 import { formatLocation, getPriceDisplay, formatDuration } from "@/lib/tourUtils";
+import { getImageForTour, handleImageError } from "@/lib/imageUtils";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -50,36 +48,8 @@ export default function HomePage() {
 
 
 
-  const getImageForTour = (tour: Tour, fallbackIndex = 0): string => {
-    // If the tour has an images field in the JSON, use it
-    if (tour.images && tour.images.trim() !== '') {
-      const img = tour.images.trim();
 
-      // If it's a JSON array string like '["img1.jpg", "img2.jpg"]'
-      if (img.startsWith('[')) {
-        try {
-          const parsed = JSON.parse(img);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const first = String(parsed[0]);
-            return first.startsWith('http') ? first : `/images/tours/${first}`;
-          }
-        } catch {
-          // fall through to treat as plain string
-        }
-      }
 
-      // Plain string or filename
-      return img.startsWith('http') ? img : `/images/tours/${img}`;
-    }
-
-    // Fallback: cycle through the 3 default images
-    const fallbackImages = [jaguarImage, dolphinImage, canoeImage];
-    // Use tour id for stable rotation if possible
-    const stableIndex = tour.id
-      ? parseInt(tour.id.replace(/\D/g, '').slice(-1) || '0', 10)
-      : fallbackIndex;
-    return fallbackImages[stableIndex % fallbackImages.length];
-  };
 
   const handleTourClick = (id: string) => {
     setLocation(`/tour/${id}`);
@@ -200,11 +170,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Tours by Destination Section */}
+      {/* Tours by Origin Section */}
       <section className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl font-bold mb-4">Tours por Destino</h2>
+            <h2 className="font-serif text-4xl font-bold mb-4">Tours por Origen</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Explora nuestras experiencias en Leticia, Puerto Nariño y Mocagua — los tres principales destinos del Amazonas colombiano
             </p>
@@ -249,6 +219,7 @@ export default function HomePage() {
                       reviews={50}
                       groupSize="2-6"
                       onClick={handleTourClick}
+                      onImageError={handleImageError}
                     />
                   ))
                 ) : (
@@ -297,6 +268,7 @@ export default function HomePage() {
                       reviews={50}
                       groupSize="2-6"
                       onClick={handleTourClick}
+                      onImageError={handleImageError}
                     />
                   ))
                 ) : (

@@ -45,7 +45,6 @@ export default function TourDetailExample() {
   return (
     <TourDetail 
       tour={mockTour}
-      onInquire={(id) => console.log('Inquire about tour:', id)}
     />
   );
 }

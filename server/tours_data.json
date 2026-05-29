@@ -12,7 +12,8 @@
     "price_6": "252.000 COP",
     "ref": "Bote Leticia / Puerto Nariño",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/2024-06-30_15-53-600x540.png",
-    "id": "04aa797b-c05c-3c92-4eb8-7e41bdb74953"
+    "id": "04aa797b-c05c-3c92-4eb8-7e41bdb74953",
+    "location": "puerto-narino"
   },
   {
     "name": "Caminata Nocturna",
@@ -27,7 +28,8 @@
     "price_6": "420.000 COP",
     "ref": "Caminata en Selva Nocturna",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2022/12/image-04-509x540.jpg",
-    "id": "a36df164-0930-981d-b82b-57557575af10"
+    "id": "a36df164-0930-981d-b82b-57557575af10",
+    "location": "leticia"
   },
   {
     "name": "Amacayacu con Alojamiento",
@@ -42,7 +44,8 @@
     "price_6": "1.224.000 COP",
     "ref": "Senderismo hacia Comunidad San Martin de Amacayacu con Alojamiento",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20230203_152444_443-600x540.jpg",
-    "id": "47fe6e8e-f7df-39ac-0af5-1f57e892910a"
+    "id": "47fe6e8e-f7df-39ac-0af5-1f57e892910a",
+    "location": "leticia"
   },
   {
     "name": "Bote Moc-Pn",
@@ -57,7 +60,8 @@
     "price_6": "132.000 COP",
     "ref": "Traslado Fluvial Mocagua-Puerto Nariño",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/2024-06-30_15-53-600x540.png",
-    "id": "55aa9453-befd-31af-ee39-b30058509ea8"
+    "id": "55aa9453-befd-31af-ee39-b30058509ea8",
+    "location": "mocagua"
   },
   {
     "name": "Amacayacu Full Day desde Let",
@@ -72,7 +76,8 @@
     "price_6": "480.000 COP",
     "ref": "Senderismo a la Comunidad indigena Amacayacu",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2022/12/image-02_2-512x540.jpg",
-    "id": "dfc11a64-e221-571d-5c36-01cdefbf0c15"
+    "id": "dfc11a64-e221-571d-5c36-01cdefbf0c15",
+    "location": "puerto-narino"
   },
   {
     "name": "Ceremonia Privada Ayahuasca",
@@ -87,7 +92,8 @@
     "price_6": "1.100.000 COP",
     "ref": "Ayahuasca18hrs",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/tour-10-600x540.jpg",
-    "id": "860b0fe0-ee4c-d179-008f-d8c75f8b6bbe"
+    "id": "860b0fe0-ee4c-d179-008f-d8c75f8b6bbe",
+    "location": "puerto-narino"
   },
   {
     "name": "Paseo en Bote Lagos del Tarapoto",
@@ -102,7 +108,8 @@
     "price_6": "378.000 COP",
     "ref": "Tarapoto 3 hrs",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/wp-17351616449095860332035176961221-600x540.jpg",
-    "id": "098564c4-bf45-1ed2-3f37-94acba4165a1"
+    "id": "098564c4-bf45-1ed2-3f37-94acba4165a1",
+    "location": "puerto-narino"
   },
   {
     "name": "Santa Teresita 4 hrs",
@@ -117,7 +124,8 @@
     "price_6": "450.000 COP",
     "ref": "Senderismo en Selva diurno",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2023/01/image-16-175x175.jpg",
-    "id": "12996c48-ba6c-598e-ec6e-6beb4546e7f0"
+    "id": "12996c48-ba6c-598e-ec6e-6beb4546e7f0",
+    "location": "leticia"
   },
   {
     "name": "Bote Let-Pn",
@@ -132,7 +140,8 @@
     "price_6": "240.000 COP",
     "ref": "Traslado Fluvial Leticia-Puerto Nariño",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/2024-06-30_15-53-600x540.png",
-    "id": "28484963-ad5e-f8f9-8dae-e4f5e53fc541"
+    "id": "28484963-ad5e-f8f9-8dae-e4f5e53fc541",
+    "location": "puerto-narino"
   },
   {
     "name": "Visita una Maloca Indigena",
@@ -147,7 +156,8 @@
     "price_6": "240.000 COP",
     "ref": "Visita una comunidad Indigena",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/tour-8-600x540.jpg",
-    "id": "7b7847da-452e-4f98-6a8a-07bfd8ef719d"
+    "id": "7b7847da-452e-4f98-6a8a-07bfd8ef719d",
+    "location": "puerto-narino"
   },
   {
     "name": "Bote Moc-Let",
@@ -162,7 +172,8 @@
     "price_6": "240.000 COP",
     "ref": "Traslado Fluvial Mocagua-Leticia",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/2024-06-30_15-53-600x540.png",
-    "id": "71c28e39-730d-ea6f-7e44-edefb5201634"
+    "id": "71c28e39-730d-ea6f-7e44-edefb5201634",
+    "location": "mocagua"
   },
   {
     "name": "CHAMB+YANCH MOC",
@@ -177,7 +188,8 @@
     "price_6": "100.000 COP",
     "ref": "Taller de Artesanías Tradicionales",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/IMG_20221221_152143_003_copy_840x591-600x540.jpg",
-    "id": "a28d3a31-1fae-0267-5e6f-3058695888de"
+    "id": "a28d3a31-1fae-0267-5e6f-3058695888de",
+    "location": "mocagua"
   },
   {
     "name": "Pernoctada Selva",
@@ -192,7 +204,8 @@
     "price_6": "420.000 COP",
     "ref": "Noche de Acampada en Selva",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/wp-17351722118724887951547057373252-175x175.jpg",
-    "id": "b59614c4-dbfd-f125-306f-47337713a645"
+    "id": "b59614c4-dbfd-f125-306f-47337713a645",
+    "location": "leticia"
   },
   {
     "name": "Tarapoto+Caimanes con Alojamiento",
@@ -207,7 +220,8 @@
     "price_6": "762.000 COP",
     "ref": "Tour de una noche al lago Tarapoto con alojamiento en Cabaña",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/FB_IMG_1628263901181-175x175.jpg",
-    "id": "a71b8610-084d-c83a-e0c6-7a930f625eb2"
+    "id": "a71b8610-084d-c83a-e0c6-7a930f625eb2",
+    "location": "puerto-narino"
   },
   {
     "name": "Traslado htl-pto",
@@ -222,7 +236,8 @@
     "price_6": "70.000 COP",
     "ref": "Traslados en Leticia hotel Centrico",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20260206_151246503_HDR-600x540.jpg",
-    "id": "e6289418-795c-6325-24c8-327e2c0f0b88"
+    "id": "e6289418-795c-6325-24c8-327e2c0f0b88",
+    "location": "leticia"
   },
   {
     "name": "Excursión a Puerto Nariño y Tarapoto",
@@ -237,7 +252,8 @@
     "price_6": "1.000.000 COP",
     "ref": "Excursion Puerto Nariño Tarapoto",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/wp-17351616449095860332035176961221-600x540.jpg",
-    "id": "fdd0c2d4-1f4c-fb19-33cb-0b28cf5489ad"
+    "id": "fdd0c2d4-1f4c-fb19-33cb-0b28cf5489ad",
+    "location": "puerto-narino"
   },
   {
     "name": "Circuito 2 Dias Puerto Nariño y Tarapoto",
@@ -252,7 +268,8 @@
     "price_6": "2.040.000 COP",
     "ref": "Circuito 2D Puerto Nariño Tarapoto",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/20240226_152249-600x540.webp",
-    "id": "58c01eb8-de5b-447e-a8d3-ea7a46ddb9f3"
+    "id": "58c01eb8-de5b-447e-a8d3-ea7a46ddb9f3",
+    "location": "puerto-narino"
   },
   {
     "name": "3 dias Amazonia profunda",
@@ -267,7 +284,8 @@
     "price_6": "2.220.000 COP",
     "ref": "3 dias Amazonia profunda",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/wp-17351722118724887951547057373252-175x175.jpg",
-    "id": "18d22927-c701-c030-f94d-352cf44d720b"
+    "id": "18d22927-c701-c030-f94d-352cf44d720b",
+    "location": "leticia"
   },
   {
     "name": "Circuito de 4 días por Puerto Nariño y Mocagua",
@@ -282,7 +300,8 @@
     "price_6": "3.880.000 COP",
     "ref": "Circuito 4 dias Puerto Nariño Mocagua",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2022/12/IMG-20191031-WA0052_copy_801x800-600x540.jpg",
-    "id": "1b599cbd-aca4-2a4a-56bf-0a036341f6fd"
+    "id": "1b599cbd-aca4-2a4a-56bf-0a036341f6fd",
+    "location": "mocagua"
   },
   {
     "name": "Circuito de 5 días por Puerto Nariño, Mocagua y Amacayacu",
@@ -297,7 +316,8 @@
     "price_6": "3.740.000 COP",
     "ref": "Circuito 5 dias Amazonas",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2024/12/Amacayacu_7_copy_640x800-600x540.jpg",
-    "id": "19a41b7a-101a-261a-4896-026c494969f4"
+    "id": "19a41b7a-101a-261a-4896-026c494969f4",
+    "location": "mocagua"
   },
   {
     "name": "6 Dias Triple Frontera y Rio Amazonas",
@@ -312,7 +332,8 @@
     "price_6": "5.800.000 COP",
     "ref": "6 Dias Triple Frontera",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20250415_174229761_HDR-1-600x540.jpg",
-    "id": "731c70cb-ed00-ae10-1f47-07689b9d0d03"
+    "id": "731c70cb-ed00-ae10-1f47-07689b9d0d03",
+    "location": "leticia"
   },
   {
     "name": "Excursión a Tabatinga + Parque Santander",
@@ -327,7 +348,8 @@
     "price_6": "360.000 COP",
     "ref": "Tabatinga Parque Santander",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20250422_171446369_HDR-600x540.jpg",
-    "id": "7e969a38-f814-d2f2-6a84-fd1f02271066"
+    "id": "7e969a38-f814-d2f2-6a84-fd1f02271066",
+    "location": "leticia"
   },
   {
     "name": "Tour de aventura en la Reserva Natural Tanimboca",
@@ -342,7 +364,8 @@
     "price_6": "480.000 COP",
     "ref": "Tanimboca aventura",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20210918_125009_5-600x540.webp",
-    "id": "8fc692cd-2e57-1827-c775-0389dbc77227"
+    "id": "8fc692cd-2e57-1827-c775-0389dbc77227",
+    "location": "leticia"
   },
   {
     "name": "Excursión a la Reserva Natural Marasha",
@@ -357,7 +380,8 @@
     "price_6": "1.600.000 COP",
     "ref": "Marasha Full Day",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20210817_082011_975-600x540.webp",
-    "id": "33265299-2b1d-86e1-d8ad-e753fdd19c86"
+    "id": "33265299-2b1d-86e1-d8ad-e753fdd19c86",
+    "location": "leticia"
   },
   {
     "name": "Excursión de 2 días a la Reserva Natural Marasha",
@@ -372,7 +396,8 @@
     "price_6": "2.040.000 COP",
     "ref": "2 Dias Marasha",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/IMG_20210816_151820_139-600x540.webp",
-    "id": "b6d2fc18-1fb7-4e22-b79b-bcb9ac634fab"
+    "id": "b6d2fc18-1fb7-4e22-b79b-bcb9ac634fab",
+    "location": "leticia"
   },
   {
     "name": "Noche en la Reserva Natural Tanimboca",
@@ -387,7 +412,8 @@
     "price_6": "1.640.000 COP",
     "ref": "Noche Tanimboca",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/FB_IMG_1745892208851-600x540.webp",
-    "id": "34000e8a-54b0-9acf-339c-962abdda38b3"
+    "id": "34000e8a-54b0-9acf-339c-962abdda38b3",
+    "location": "leticia"
   },
   {
     "name": "Excursión a la Reserva Natura Park",
@@ -402,6 +428,7 @@
     "price_6": "844.000 COP",
     "ref": "Reserva Natura Park",
     "images": "https://conexion-amazonas.com/wp-content/uploads/2026/05/maxresdefault-600x540.jpg",
-    "id": "b724c838-c9cd-a7df-cd50-9af2c737a02a"
+    "id": "b724c838-c9cd-a7df-cd50-9af2c737a02a",
+    "location": "leticia"
   }
 ]

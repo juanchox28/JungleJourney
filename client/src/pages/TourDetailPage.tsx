@@ -95,10 +95,6 @@ export default function TourDetailPage() {
     enabled: !!tourId,
   });
 
-  const handleInquire = (tourId: string) => {
-    console.log('Inquiry for tour:', tourId);
-  };
-
   const calculateTourPrice = () => {
     if (!tour) return 0;
     const priceInfo = getPriceDisplay(tour);
@@ -192,7 +188,7 @@ export default function TourDetailPage() {
       </div>
 
       <Navigation />
-      <TourDetail tour={displayTour} onInquire={handleInquire} />
+      <TourDetail tour={displayTour} />
 
       {/* Tour Booking Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -16,6 +16,7 @@ interface TourCardProps {
   reviews: number;
   groupSize: string;
   onClick?: (id: string) => void;
+  onImageError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
 }
 
 const difficultyConfig = {
@@ -37,7 +38,8 @@ export default function TourCard({
   rating,
   reviews,
   groupSize,
-  onClick
+  onClick,
+  onImageError
 }: TourCardProps) {
   const DifficultyIcon = difficultyConfig[difficulty].icon;
   const isMonetary = priceDisplay.startsWith('$');
@@ -62,6 +64,7 @@ export default function TourCard({
           src={image}
           alt={`Tour image for ${title} - ${description}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={onImageError}
         />
         <div className="absolute top-4 right-4">
           <Badge className={difficultyConfig[difficulty].color}>

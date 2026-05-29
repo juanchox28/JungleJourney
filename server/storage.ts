@@ -24,11 +24,30 @@ export interface IStorage {
   createBooking(booking: InsertBooking): Promise<Booking>;
 }
 
-function parseLocation(locationStr: string): string {
-  if (!locationStr) return '';
-  if (locationStr.includes('Leticia')) return 'leticia';
-  if (locationStr.includes('Puerto Nariño') || locationStr.includes('Puerto Narino')) return 'puerto-narino';
-  if (locationStr.includes('Mocagua')) return 'mocagua';
+function parseLocation(locationStr: string | undefined, refStr?: string, nameStr?: string): string {
+  // Try the explicit location field first (handles both slug and human-readable formats)
+  if (locationStr) {
+    const loc = locationStr.toLowerCase();
+    if (loc === 'leticia' || loc === 'puerto-narino' || loc === 'puerto nariño' || loc === 'puerto narino' || loc === 'mocagua') {
+      if (loc === 'leticia') return 'leticia';
+      if (loc === 'mocagua') return 'mocagua';
+      return 'puerto-narino';
+    }
+  }
+  // Fall back to deriving location from the ref field
+  if (refStr) {
+    const ref = refStr.toLowerCase();
+    if (ref.includes('mocagua')) return 'mocagua';
+    if (ref.includes('leticia')) return 'leticia';
+    if (ref.includes('puerto nariñ') || ref.includes('puerto narino')) return 'puerto-narino';
+  }
+  // Fall back to deriving location from the name field
+  if (nameStr) {
+    const name = nameStr.toLowerCase();
+    if (name.includes('leticia')) return 'leticia';
+    if (name.includes('puerto nariñ') || name.includes('puerto narino')) return 'puerto-narino';
+    if (name.includes('mocagua')) return 'mocagua';
+  }
   return '';
 }
 
@@ -100,7 +119,7 @@ export class MemStorage implements IStorage {
           description: rawTour.description || '',
           detalle: rawTour.detalle || '',
           duration: rawTour.duration || '',
-          location: parseLocation(rawTour.location),
+          location: parseLocation(rawTour.location, rawTour.ref, rawTour.name),
           price2: cleanPrice(rawTour.price_2),
           price3: cleanPrice(rawTour.price_3),
           price4: cleanPrice(rawTour.price_4),

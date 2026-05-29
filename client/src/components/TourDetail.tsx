@@ -1,30 +1,62 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Users, MapPin, Check } from "lucide-react";
-import type { Tour } from "@shared/schema";
+import { Star, Clock, Users, MapPin, Check, Image as ImageIcon } from "lucide-react";
+import { useState } from "react";
 
-interface TourDetailProps {
-  tour: Tour;
-  onInquire?: (tourId: string) => void;
+interface DisplayTour {
+  id: string;
+  title: string;
+  description: string;
+  images: string[];
+  duration: string;
+  difficulty: string;
+  priceDisplay: string;
+  rating: number;
+  reviews: number;
+  groupSize: string;
+  location: string;
+  included: string[];
+  itinerary: Array<{ day: number; title: string; description: string }>;
 }
 
-export default function TourDetail({ tour, onInquire }: TourDetailProps) {
+interface TourDetailProps {
+  tour: DisplayTour;
+}
+
+export default function TourDetail({ tour }: TourDetailProps) {
+  const [mainImageError, setMainImageError] = useState(false);
+  const [thumbErrors, setThumbErrors] = useState<Set<number>>(new Set());
+
+  const handleMainImageError = () => setMainImageError(true);
+  const handleThumbError = (i: number) => setThumbErrors(prev => new Set(prev).add(i));
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
         <div className="lg:col-span-3">
-          <div className="aspect-video rounded-2xl overflow-hidden mb-4">
-            <img 
-              src={tour.images[0]} 
-              alt={tour.title}
-              className="w-full h-full object-cover"
-            />
+          <div className="aspect-video rounded-2xl overflow-hidden mb-4 bg-muted flex items-center justify-center">
+            {mainImageError ? (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <ImageIcon className="w-12 h-12" />
+                <span className="text-sm">Imagen no disponible</span>
+              </div>
+            ) : (
+              <img 
+                src={tour.images[0]} 
+                alt={tour.title}
+                className="w-full h-full object-cover"
+                onError={handleMainImageError}
+              />
+            )}
           </div>
           {tour.images.length > 1 && (
             <div className="grid grid-cols-4 gap-4">
               {tour.images.slice(1).map((img, i) => (
-                <div key={i} className="aspect-square rounded-xl overflow-hidden">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                  {thumbErrors.has(i) ? (
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                  ) : (
+                    <img src={img} alt="" className="w-full h-full object-cover" onError={() => handleThumbError(i)} />
+                  )}
                 </div>
               ))}
             </div>
